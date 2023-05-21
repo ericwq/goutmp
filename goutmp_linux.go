@@ -11,23 +11,23 @@ package goutmp
 //#include <time.h>
 //#include <pwd.h>
 //
-//#include <utmpx.h>
+//#include <utmps/utmps.h>
 //#include <lastlog.h>
 //
 //typedef char char_t;
 //
 //
-//void pututmp(struct utmpx* entry, char* name, char* host) {
+//void pututmp(struct utmpx* entry, char* uname, char* ptsname, char* host) {
 //  //int32_t stat = system("echo ---- pre ----;who");
 //
 //  entry->ut_type = USER_PROCESS;
 //  entry->ut_pid = getpid();
-//  strcpy(entry->ut_line, ttyname(STDIN_FILENO) + strlen("/dev/"));
+//  strcpy(entry->ut_line, ptsname + strlen("/dev/"));
 //  /* only correct for ptys named /dev/tty[pqr][0-9a-z] */
 //
-//  strcpy(entry->ut_id, ttyname(STDIN_FILENO) + strlen("/dev/tty"));
+//  strcpy(entry->ut_id, ptsname + strlen("/dev/pts/"));
 //  entry->ut_time = time(NULL);
-//  strcpy(entry->ut_user, name);
+//  strcpy(entry->ut_user, uname);
 //  strcpy(entry->ut_host, host);
 //  entry->ut_addr = 0;
 //  setutxent();
@@ -112,7 +112,7 @@ func Put_utmp(user, ptsName, host string) UtmpEntry {
 	var entry UtmpEntry
 
 	// log.Println("Put_utmp:host ", host, " user ", user)
-	C.pututmp(&entry.entry, C.CString(user), C.CString(host))
+	C.pututmp(&entry.entry, C.CString(user), C.CString(ptsName), C.CString(host))
 	return entry
 }
 
