@@ -8,6 +8,11 @@
 *.so
 *.dylib
 
+# cgo file.
+*.so
+*.o
+*.a
+
 # Test binary, built with `go test -c`
 *.test
 
