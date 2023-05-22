@@ -3,7 +3,7 @@
 package main
 
 import (
-	"time"
+	// "time"
 
 	utmps "github.com/ericwq/goutmp"
 )
@@ -11,8 +11,8 @@ import (
 func main() {
 	user := "bin"
 	host := "test.example.com"
-	utmp := utmps.Put_utmp(user, "/dev/pts0", host)
-	utmps.Put_lastlog_entry("xs", user, "/dev/pts0", host)
-	time.Sleep(10 * time.Second)
+	utmp := utmps.Put_utmp(user, "/dev/pts/0", host)
+	utmps.Put_lastlog_entry("xs", user, "/dev/pts/0", host)
+	// time.Sleep(10 * time.Second)
 	utmps.Unput_utmp(utmp)
 }

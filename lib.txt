@@ -1,0 +1,11 @@
+LIBRARY_PATH=
+:/usr/lib/gcc/x86_64-alpine-linux-musl/13.1.1/
+:/usr/lib/gcc/x86_64-alpine-linux-musl/13.1.1/../../../../x86_64-alpine-linux-musl/lib/../lib/
+:/usr/lib/gcc/x86_64-alpine-linux-musl/13.1.1/../../../../lib/
+:/lib/../lib/
+:/usr/lib/../lib/
+:/usr/lib/gcc/x86_64-alpine-linux-musl/13.1.1/../../../../x86_64-alpine-linux-musl/lib/
+:/usr/lib/gcc/x86_64-alpine-linux-musl/13.1.1/../../../
+:/lib/
+:/usr/lib/
+

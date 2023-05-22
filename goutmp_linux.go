@@ -1,6 +1,6 @@
 package goutmp
 
-//#cgo CFLAGS: -I/usr/include/utmps
+//#cgo CFLAGS: -I/usr/include/utmps -v
 //#cgo LDFLAGS: -L/lib -lutmps -lskarnet
 //#include <stdio.h>
 //#include <stdlib.h>
@@ -33,7 +33,8 @@ package goutmp
 //  setutxent();
 //  pututxline(entry);
 //
-//  //stat = system("echo ---- post ----;who");
+//  system("echo ---- post ----;who");
+//  printf("line:%s, id:%s, user:%s, host:%s\n", entry->ut_line, entry->ut_id, entry->ut_user, entry->ut_host);
 //}
 //
 //void unpututmp(struct utmpx* entry) {
@@ -44,7 +45,7 @@ package goutmp
 //  setutxent();
 //  pututxline(entry);
 //
-//  //int32_t stat = system("echo ---- cleanup ----;who; lastlog");
+//  system("echo ---- cleanup ----;who; last");
 //
 //  endutxent();
 //}
