@@ -10,8 +10,14 @@ This is a modified golang module which support utmpx API. This is a temporary go
 // cd ./xutmp/
 // gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
 // ar rcs libxutmp.a xutmp.o
-// gcc -shared -I/usr/include/utmps -L/lib -lutmps -lskarnet -o libnumber.so xutmp.c
+// gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
 
+/*
+#cgo CFLAGS: -I./xutmp
+#cgo LDFLAGS: -L${SRCDIR}/xutmp -lxutmp
+
+#include "xutmp.h"
+*/
 ```
 
 ## original goutmp README.md

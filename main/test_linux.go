@@ -10,9 +10,9 @@ import (
 
 func main() {
 	user := "ide"
-	host := "example.com"
-	utmp := utmps.Put_utmp(user, "/dev/pts/0", host)
-	utmps.Put_lastlog_entry("xs", user, "/dev/pts/0", host)
+	host := "192.168.1.10"
+	utmp := utmps.Put_utmp(user, "/dev/pts/5", host)
+	utmps.Put_lastlog_entry("xs", user, "/dev/pts/5", host)
 	// time.Sleep(10 * time.Second)
 	utmps.Unput_utmp(utmp)
 }

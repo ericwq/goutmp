@@ -18,10 +18,11 @@ void pututmp(struct utmpx* entry, char* uname, char* ptsname, char* host) {
 	entry->ut_addr = 0;
 	setutxent();
 	pututxline(entry);
+	endutxent();
 
 	system("echo ---- post ----;who");
-	printf("line:%s, id:%s, user:%s, host:%s\n", entry->ut_line, entry->ut_id, entry->ut_user,
-		   entry->ut_host);
+	// printf("line:%s, id:%s, user:%s, host:%s\n", entry->ut_line, entry->ut_id, entry->ut_user,
+	// 	   entry->ut_host);
 }
 
 void unpututmp(struct utmpx* entry) {
@@ -31,10 +32,9 @@ void unpututmp(struct utmpx* entry) {
 	memset(entry->ut_user, 0, UT_NAMESIZE);
 	setutxent();
 	pututxline(entry);
+	endutxent();
 
 	system("echo ---- cleanup ----;who; last");
-
-	endutxent();
 }
 
 int putlastlogentry(int64_t t, int uid, char* line, char* host) {
