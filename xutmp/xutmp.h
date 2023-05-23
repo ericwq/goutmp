@@ -7,15 +7,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <lastlog.h>
-#include <utmpx.h>
+#include <utmps/utmps.h>
 
-// #cgo CFLAGS: -I/usr/include/utmps -v
-// #cgo LDFLAGS: -L/lib -lutmps -lskarnet
-
-// #include <lastlog.h>
-// gcc -I/usr/include/utmps -v -L/lib -lutmps -lskarnet -c -o xutmp.o xutmp.c
-// gcc -shared -I/usr/include/utmps -L/lib -lutmps -lskarnet -o libnumber.so xutmp.c
 void pututmp(struct utmpx* entry, char* uname, char* ptsname, char* host);
 void unpututmp(struct utmpx* entry);
 int putlastlogentry(int64_t t, int uid, char* line, char* host);

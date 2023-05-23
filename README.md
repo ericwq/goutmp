@@ -2,6 +2,18 @@
 
 This is a modified golang module which support utmpx API. This is a temporary golang module. The next step is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is only a wrapper for `utmps` C client library.
 
+```c
+// #cgo CFLAGS: -I/usr/include/utmps
+// #cgo LDFLAGS: -lutmps -lskarnet
+
+// #include <lastlog.h>
+// cd ./xutmp/
+// gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
+// ar rcs libxutmp.a xutmp.o
+// gcc -shared -I/usr/include/utmps -L/lib -lutmps -lskarnet -o libnumber.so xutmp.c
+
+```
+
 ## original goutmp README.md
 [goutmp](https://gogs.blitter.com/RLabs/goutmp) - Minimal bindings to C stdlib pututmpx(), getutmpx() (/var/log/wtmp) and /var/log/lastlog
 

@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-	user := "bin"
-	host := "test.example.com"
+	user := "ide"
+	host := "example.com"
 	utmp := utmps.Put_utmp(user, "/dev/pts/0", host)
 	utmps.Put_lastlog_entry("xs", user, "/dev/pts/0", host)
 	// time.Sleep(10 * time.Second)

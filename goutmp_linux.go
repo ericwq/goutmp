@@ -1,8 +1,11 @@
 package goutmp
 
-//#cgo CFLAGS: -I./xutmp
-//#cgo LDFLAGS: -L${SRCDIR}/xutmp -lxutmp -lutmps -lskarnet
-//#include "xutmp.h"
+/*
+#cgo CFLAGS: -I./xutmp
+#cgo LDFLAGS: -L${SRCDIR}/xutmp -lxutmp
+
+#include "xutmp.h"
+*/
 import "C"
 
 import (

@@ -1,4 +1,5 @@
 #include "xutmp.h"
+#include <lastlog.h>
 
 typedef char char_t;
 
