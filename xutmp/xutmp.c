@@ -3,35 +3,44 @@
 
 typedef char char_t;
 
-void pututmp(struct utmpx* entry, char* uname, char* ptsname, char* host) {
-	// int32_t stat = system("echo ---- pre ----;who");
+void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
+	system("echo ---- pre ----;who");
+	memset(ut, 0, sizeof(struct utmpx));
 
-	entry->ut_type = USER_PROCESS;
-	entry->ut_pid = getpid();
-	strcpy(entry->ut_line, ptsname + strlen("/dev/"));
-	/* only correct for ptys named /dev/tty[pqr][0-9a-z] */
+	ut->ut_type = USER_PROCESS;  // This is a user login
+	strncpy(ut->ut_user, uname, sizeof(ut->ut_user));
+	ut->ut_time = time(NULL);  // Stamp with current time
+	ut->ut_pid = getpid();
 
-	strcpy(entry->ut_id, ptsname + strlen("/dev/pts/"));
-	entry->ut_time = time(NULL);
-	strcpy(entry->ut_user, uname);
-	strcpy(entry->ut_host, host);
-	entry->ut_addr = 0;
-	setutxent();
-	pututxline(entry);
+	// Set ut_line and ut_id based on the terminal associated with 'stdin'. This code assumes
+	// terminals named "/dev/[pt]t[sy]*". The "/dev/" dirname is 5 characters; the "[pt]t[sy]"
+	// filename prefix is 3 characters (making 8 characters in all).
+
+	// devName = ttyname(STDIN_FILENO);
+	// if (devName == NULL)
+	// 	errExit("ttyname");
+	// if (strlen(devName) <= 8) /* Should never happen */
+	// 	fatal("Terminal name is too short: %s", devName);
+	strncpy(ut->ut_line, ptsname + 5, sizeof(ut->ut_line));
+	strncpy(ut->ut_id, ptsname + 8, sizeof(ut->ut_id));
+	strcpy(ut->ut_host, host);
+
+	setutxent();               // Rewind to start of utmp file
+	pututxline(ut);            // Overwrite previous utmp record
+	updwtmpx(_PATH_WTMP, ut);  // Append login record to wtmp
 	endutxent();
-
 	system("echo ---- post ----;who");
-	// printf("line:%s, id:%s, user:%s, host:%s\n", entry->ut_line, entry->ut_id, entry->ut_user,
-	// 	   entry->ut_host);
 }
 
-void unpututmp(struct utmpx* entry) {
-	entry->ut_type = DEAD_PROCESS;
-	memset(entry->ut_line, 0, UT_LINESIZE);
-	entry->ut_time = 0;
-	memset(entry->ut_user, 0, UT_NAMESIZE);
+void unpututmp(struct utmpx* ut) {
+	ut->ut_type = DEAD_PROCESS;  // Required for logout record
+	// memset(ut->ut_line, 0, UT_LINESIZE);
+	time((time_t*)&ut->ut_tv.tv_sec);  // Stamp with logout time
+	// ut->ut_time = 0;
+	memset(ut->ut_user, 0, UT_NAMESIZE);  // Logout record has null username
 	setutxent();
-	pututxline(entry);
+	pututxline(ut);
+	updwtmpx(_PATH_WTMP, ut);  // Append logout record to wtmp
 	endutxent();
 
 	system("echo ---- cleanup ----;who; last");
