@@ -18,6 +18,7 @@ package goutmp
 typedef char char_t;
 
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
+	printf("effective GID=%u\n",getegid());
 	system("echo ---- pre ----;who");
 	memset(ut, 0, sizeof(struct utmpx));
 
