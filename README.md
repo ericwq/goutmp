@@ -22,7 +22,7 @@ This is a modified golang module which support utmpx API. This is a temporary go
 ## how to set effective GID for your service
 You has a service and want that service has the privileges to access `utmps` service. Then you need to set the effective GID for your service to be `utmp`. The `utmps` service require effective GID of `utmp`. Refer to [The utmps-utmpd program](https://skarnet.org/software/utmps/utmps-utmpd.html) for detail.
 
-Let's say your service program is `prog2`. You need set GID for `prog2`.
+Let's say your service program is `prog2`. You need set GID for `prog2`. Let's assume that user `ide` belongs to two groups: `develop` and `utmp`. You can use `$ adduser ide utmp` command to achive it.
 
 - first, change the group of `prog2` to `utmp`.
 - second, set-GID for `prog2`.
@@ -48,7 +48,7 @@ drwxr-xr-x    1 root     root          4096 May 27 18:12 ..
 -rwxr-sr-x    1 ide      utmp       2137512 May 27 20:38 prog2
 ```
 
-Please refer to [s6-setuidgid](https://skarnet.org/software/s6/s6-setuidgid.html) to accomplish the above work in a single command.
+Please refer to [s6-setuidgid](https://skarnet.org/software/s6/s6-setuidgid.html) to accomplish the above work in a single command. Note: in docker environment, mounted local file system does not support set UID/GID operation.
 
 ## original goutmp README.md
 [goutmp](https://gogs.blitter.com/RLabs/goutmp) - Minimal bindings to C stdlib pututmpx(), getutmpx() (/var/log/wtmp) and /var/log/lastlog
