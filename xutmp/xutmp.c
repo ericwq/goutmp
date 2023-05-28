@@ -4,12 +4,13 @@
 typedef char char_t;
 
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
-	system("echo ---- pre ----;who");
+	// printf("effective GID=%u\n", getegid());
+	// system("echo ---- pre ----;who");
 	memset(ut, 0, sizeof(struct utmpx));
 
 	ut->ut_type = USER_PROCESS;  // This is a user login
 	strncpy(ut->ut_user, uname, sizeof(ut->ut_user));
-	ut->ut_time = time(NULL);  // Stamp with current time
+	time((time_t*)&(ut->ut_tv.tv_sec));  // Stamp with current time
 	ut->ut_pid = getpid();
 
 	// Set ut_line and ut_id based on the terminal associated with 'stdin'. This code assumes
@@ -19,7 +20,7 @@ void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
 	// devName = ttyname(STDIN_FILENO);
 	// if (devName == NULL)
 	// 	errExit("ttyname");
-	// if (strlen(devName) <= 8) /* Should never happen */
+	// if (strlen(devName) <= 8) // Should never happen
 	// 	fatal("Terminal name is too short: %s", devName);
 	strncpy(ut->ut_line, ptsname + 5, sizeof(ut->ut_line));
 	strncpy(ut->ut_id, ptsname + 8, sizeof(ut->ut_id));
@@ -29,21 +30,19 @@ void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
 	pututxline(ut);            // Overwrite previous utmp record
 	updwtmpx(_PATH_WTMP, ut);  // Append login record to wtmp
 	endutxent();
-	system("echo ---- post ----;who");
+	// system("echo ---- post ----;who");
 }
 
 void unpututmp(struct utmpx* ut) {
-	ut->ut_type = DEAD_PROCESS;  // Required for logout record
-	// memset(ut->ut_line, 0, UT_LINESIZE);
-	time((time_t*)&ut->ut_tv.tv_sec);  // Stamp with logout time
-	// ut->ut_time = 0;
-	memset(ut->ut_user, 0, UT_NAMESIZE);  // Logout record has null username
+	ut->ut_type = DEAD_PROCESS;              // Required for logout record
+	time((time_t*)&(ut->ut_tv.tv_sec));      // Stamp with logout time
+	memset(&(ut->ut_user), 0, UT_NAMESIZE);  // Logout record has null username
 	setutxent();
 	pututxline(ut);
 	updwtmpx(_PATH_WTMP, ut);  // Append logout record to wtmp
 	endutxent();
 
-	system("echo ---- cleanup ----;who; last");
+	// system("echo ---- cleanup ----;who; last");
 }
 
 int putlastlogentry(int64_t t, int uid, char* line, char* host) {
