@@ -8,7 +8,7 @@ We use the following cgo derective and inline C functions to implement the wrapp
 // #cgo pkg-config: utmps skalibs
 ```
 
-Please use the following commands to build the stand alone C module, either staticly or dyanamicly.
+Please use the following commands to build the stand alone C module, either staticly or dynamicly.
 ```sh 
 $ cd ./xutmp/
 $ gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
@@ -31,24 +31,25 @@ The following cgo derective is for stand alone C module.
 
 ## prepare the utmps environment 
 
-Refer to [alpine container with openrc support](https://github.com/ericwq/s6), run the following command to start the container.
+Refer to [alpine container with openrc support](https://github.com/ericwq/s6) to build the docker image, run the following command to start container.
 ```sh
 % docker run --env TZ=Asia/Shanghai --tty --privileged --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
   -h openrc-ssh --name openrc-ssh -d -p 5022:22 openrc-ssh:0.1.0
 ```
 
-Install `go` SDK and `utmps-dev` package. Note, this command require root privilege.
+Install `go` SDK and `utmps-dev` package to prepare building dependencies. Note, this command require root privilege.
 ```sh
-% apk add go utmps-dev
+# apk add go utmps-dev
 ```
 
-Run `setup-utmp` script to prepare the container. Note, this command require root privilege.
-```shared
-% setup-utmp
+Run `setup-utmp` script to setup `utmps` services for the container. Note, this command require root privilege.
+```sh
+# setup-utmp
 ```
 
-Restart the container. Run the following command to make sure everything works.
-```
+Restart the container. Run the following command to make sure everything works. `pstree` command shows that 3 `utmps` related service is ready for us. `who` and `last` command shows the correct result from `utmps` service.
+
+```sh
 openrc-ssh:~# pstree -p
 init(1)-+-s6-ipcserverd(154)
         |-s6-ipcserverd(217)
@@ -61,7 +62,45 @@ USER       TTY            HOST               LOGIN        TIME
 root       pts/1          172.17.0.1         May 29 22:48
 ```
 
-Now, you can build your application and run it according to the following section.
+## build and run goutmp application.
+
+Now, it's time to build your application and run it according to the following section.
+
+Add user `ide` into `utmp` group. This is required by `utmps`. Note, this command require root privilege.
+
+```sh
+openrc-ssh:~# adduser ide utmp
+```
+
+Set GID for the application. Note, local mounted file system in docker (such as the ~/develop directory) doesn't support set GID appplication. That is why we move it to the `/tmp` directory.
+
+```sh
+openrc-ssh:~/develop/goutmp$ cd goutmp
+openrc-ssh:~/develop/goutmp$ go build main/test_linux.go
+openrc-ssh:~/develop/goutmp$ ls -al
+total 2116
+drwxr-xr-x   11 ide      develop        352 May 29 22:50 .
+drwxr-xr-x   24 ide      develop        768 May 24 07:00 ..
+drwxr-xr-x   16 ide      develop        512 May 29 21:59 .git
+-rw-r--r--    1 ide      develop        515 May 28 19:16 .gitignore
+-rw-r--r--    1 ide      develop       1063 May 21 14:31 LICENSE
+-rw-r--r--    1 ide      develop       4651 May 29 22:49 README.md
+-rw-r--r--    1 ide      develop         41 May 21 14:34 go.mod
+-rw-r--r--    1 ide      develop       4120 May 28 19:13 goutmp_linux.go
+drwxr-xr-x    3 ide      develop         96 May 28 20:11 main
+-rwxr-xr-x    1 ide      develop    2137992 May 29 22:50 test_linux
+drwxr-xr-x    6 ide      develop        192 May 28 19:13 xutmp
+openrc-ssh:~/develop/goutmp$ cp test_linux  /tmp/
+openrc-ssh:~/develop/goutmp$ cd /tmp
+openrc-ssh:/tmp$ chgrp utmp test_linux
+openrc-ssh:/tmp$ chmod g+s test_linux
+openrc-ssh:/tmp$ ls -al
+total 2096
+drwxrwxrwt    1 root     root          4096 May 29 22:50 .
+drwxr-xr-x    1 root     root          4096 May 29 22:41 ..
+-rwxr-sr-x    1 ide      utmp       2137992 May 29 22:50 test_linux
+openrc-ssh:/tmp$ ./test_linux
+```
 
 ## how to set effective GID for your service
 You has a service and want that service has the privileges to access `utmps` service. Then you need to set the effective GID for your service to be `utmp`. The `utmps` service require effective GID of `utmp`. Refer to [The utmps-utmpd program](https://skarnet.org/software/utmps/utmps-utmpd.html) for detail.
