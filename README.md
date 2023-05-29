@@ -2,16 +2,25 @@
 
 This is a modified golang module which support utmpx API. This is a temporary golang module. The next step is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is only a wrapper for `utmps` C client library.
 
+## inline C or standard alone C module
+We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than standard alone C module.
 ```c
-// #cgo CFLAGS: -I/usr/include/utmps
-// #cgo LDFLAGS: -lutmps -lskarnet
+// #cgo pkg-config: utmps skalibs
+```
 
-// #include <lastlog.h>
-// cd ./xutmp/
-// gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
-// ar rcs libxutmp.a xutmp.o
-// gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
+Please use the following commands to build the standard alone C module, either staticly or dyanamicly.
+```sh 
+$ cd ./xutmp/
+$ gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
+$ ar rcs libxutmp.a xutmp.o
+```
 
+```sh
+$ gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
+```
+
+The following cgo derective is for standard alone C module.
+```c
 /*
 #cgo CFLAGS: -I./xutmp
 #cgo LDFLAGS: -L${SRCDIR}/xutmp -lxutmp
@@ -19,6 +28,41 @@ This is a modified golang module which support utmpx API. This is a temporary go
 #include "xutmp.h"
 */
 ```
+
+## prepare the utmps environment 
+
+Refer to [alpine container with openrc support](https://github.com/ericwq/s6), run the following command to start the container.
+```sh
+% docker run --env TZ=Asia/Shanghai --tty --privileged --volume /sys/fs/cgroup:/sys/fs/cgroup:ro \
+  -h openrc-ssh --name openrc-ssh -d -p 5022:22 openrc-ssh:0.1.0
+```
+
+Install `go` SDK and `utmps-dev` package. Note, this command require root privilege.
+```sh
+% apk add go utmps-dev
+```
+
+Run `setup-utmp` script to prepare the container.
+```shared
+% setup-utmp
+```
+
+Restart the container. Run the following command to make sure everything works.
+```sh
+openrc-ssh:~# pstree -p
+init(1)-+-s6-ipcserverd(154)
+        |-s6-ipcserverd(217)
+        |-s6-ipcserverd(245)
+        `-sshd(190)---sshd(286)---ash(288)---pstree(292)
+openrc-ssh:~# who
+root            pts/1           00:00   May 29 22:48:09  172.17.0.1
+openrc-ssh:~# last
+USER       TTY            HOST               LOGIN        TIME
+root       pts/1          172.17.0.1         May 29 22:48
+```
+
+Now, you can build your application and run it according to the following section.
+
 ## how to set effective GID for your service
 You has a service and want that service has the privileges to access `utmps` service. Then you need to set the effective GID for your service to be `utmp`. The `utmps` service require effective GID of `utmp`. Refer to [The utmps-utmpd program](https://skarnet.org/software/utmps/utmps-utmpd.html) for detail.
 
