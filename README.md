@@ -2,13 +2,13 @@
 
 This is a modified golang module which support utmpx API. This is a temporary golang module. The next step is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is only a wrapper for `utmps` C client library.
 
-## inline C or standard alone C module
-We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than standard alone C module.
+## inline C or stand alone C module
+We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than stand alone C module.
 ```c
 // #cgo pkg-config: utmps skalibs
 ```
 
-Please use the following commands to build the standard alone C module, either staticly or dyanamicly.
+Please use the following commands to build the stand alone C module, either staticly or dyanamicly.
 ```sh 
 $ cd ./xutmp/
 $ gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
@@ -19,7 +19,7 @@ $ ar rcs libxutmp.a xutmp.o
 $ gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
 ```
 
-The following cgo derective is for standard alone C module.
+The following cgo derective is for stand alone C module.
 ```c
 /*
 #cgo CFLAGS: -I./xutmp
