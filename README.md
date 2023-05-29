@@ -42,13 +42,13 @@ Install `go` SDK and `utmps-dev` package. Note, this command require root privil
 % apk add go utmps-dev
 ```
 
-Run `setup-utmp` script to prepare the container.
+Run `setup-utmp` script to prepare the container. Note, this command require root privilege.
 ```shared
 % setup-utmp
 ```
 
 Restart the container. Run the following command to make sure everything works.
-```sh
+```
 openrc-ssh:~# pstree -p
 init(1)-+-s6-ipcserverd(154)
         |-s6-ipcserverd(217)
