@@ -2,6 +2,14 @@
 
 This is a modified golang module which support utmpx API. This is a temporary golang module. The next step is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is only a wrapper for `utmps` C client library.
 
+## difference with original goutmp
+
+There are several differences between `ericwq/goutmp` and `RLabs/goutmp`. `ericwq/goutmp` follow the example from [The linux programming interface](https://www.oreilly.com/library/view/the-linux-programming/9781593272203/) (P829).
+
+- `ericwq/goutmp` support `utmpx` API, while `RLabs/goutmp` support `utmp` API.
+- `ericwq/goutmp` update `wtmp` when update `utmp` record. This behavior is more reasonable.
+- `ericwq/goutmp` support `tty` and `pts` device, while `ericwq/goutmp` only support `pts` device.
+
 ## inline C or stand alone C module
 We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than stand alone C module.
 ```c
