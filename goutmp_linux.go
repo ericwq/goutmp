@@ -59,6 +59,13 @@ void unpututmp(struct utmpx* ut) {
 	// system("echo ---- cleanup ----;who; last");
 }
 
+struct utmpx *getutmp() {
+	struct utmpx* res = NULL;
+	res = getutxent();
+
+	return res;
+}
+
 int putlastlogentry(int64_t t, int uid, char* line, char* host) {
 	int retval = 0;
 	FILE* f;
@@ -96,9 +103,26 @@ import (
 	"time"
 )
 
+const (
+	EMPTY         = 0
+	RUN_LVL       = 1
+	BOOT_TIME     = 2
+	NEW_TIME      = 3
+	OLD_TIME      = 4
+	INIT_PROCESS  = 5
+	LOGIN_PROCESS = 6
+	USER_PROCESS  = 7
+	DEAD_PROCESS  = 8
+)
+
 // UtmpEntry wraps the C struct utmp
 type UtmpEntry struct {
 	entry C.struct_utmpx
+}
+
+func (u *UtmpEntry) GetLine() string {
+	p := &(u.entry.ut_line)
+	return C.GoString(p)
 }
 
 // return remote client hostname or IP if host lookup fails
@@ -130,6 +154,18 @@ func Put_utmp(user, ptsName, host string) UtmpEntry {
 // Remove a username/host entry from utmp
 func Unput_utmp(entry UtmpEntry) {
 	C.unpututmp(&entry.entry)
+}
+
+func Get_utmp() *UtmpEntry {
+	var ut UtmpEntry
+
+	p := C.getutmp()
+	if p != nil {
+		return nil
+	} else {
+		ut.entry = *p
+	}
+	return &ut
 }
 
 // Put the login app, username and originating host/IP to lastlog

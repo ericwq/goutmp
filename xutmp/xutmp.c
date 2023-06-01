@@ -45,6 +45,13 @@ void unpututmp(struct utmpx* ut) {
 	// system("echo ---- cleanup ----;who; last");
 }
 
+struct utmpx* getutmp() {
+	struct utmpx* res = NULL;
+	res = getutxent();
+
+	return res;
+}
+
 int putlastlogentry(int64_t t, int uid, char* line, char* host) {
 	int retval = 0;
 	FILE* f;
