@@ -96,11 +96,14 @@ int putlastlogentry(int64_t t, int uid, char* line, char* host) {
 import "C"
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"os/user"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 const (
@@ -120,10 +123,10 @@ type UtmpEntry struct {
 	entry C.struct_utmpx
 }
 
-func (u *UtmpEntry) GetLine() string {
-	p := &(u.entry.ut_line)
-	return C.GoString(p)
-}
+// func (u *Utmpx) GetLine() string {
+// 	return unsafe.Slice(u.Line,32)
+// 	return fmt.Sprintf("%s", u.Line)
+// }
 
 // return remote client hostname or IP if host lookup fails
 // addr is expected to be of the format given by net.Addr.String()
@@ -156,16 +159,22 @@ func Unput_utmp(entry UtmpEntry) {
 	C.unpututmp(&entry.entry)
 }
 
-func Get_utmp() *UtmpEntry {
-	var ut UtmpEntry
+// https://github.com/llgoer/cgo-struct-array/blob/master/src/main.go
+// https://medium.com/@liamkelly17/working-with-packed-c-structs-in-cgo-224a0a3b708b
+func Get_utmp() *Utmpx {
+	g := &Utmpx{}
 
 	p := C.getutmp()
 	if p != nil {
 		return nil
 	} else {
-		ut.entry = *p
+		cdata := C.GoBytes(unsafe.Pointer(p), C.sizeof_struct_utmpx)
+		buf := bytes.NewBuffer(cdata)
+		binary.Read(buf, binary.LittleEndian, &g.Type)
+		binary.Read(buf, binary.LittleEndian, &g.Pid)
+		binary.Read(buf, binary.LittleEndian, &g.Line)
 	}
-	return &ut
+	return g
 }
 
 // Put the login app, username and originating host/IP to lastlog
