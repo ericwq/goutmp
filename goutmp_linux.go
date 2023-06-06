@@ -76,13 +76,13 @@ struct utmpx* getutmp() {
 	// for (i = start; i < end; i++)
 	// 	printf("%02x ", charPtr[i]);
 	// printf("\n");
-
-	printf(
-		"[ C] type=%d; pid=%d; line=%s, id=%.4s; user=%s; host=%s; exit={%u %u}, session=%d "
-		"time={%ld %ld}\n",
-		res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
-		res->ut_exit.e_termination, res->ut_exit.e_exit, res->ut_session, res->ut_tv.tv_sec,
-		res->ut_tv.tv_usec);
+	//
+	// printf(
+	// 	"[ C] type=%d; pid=%d; line=%s, id=%.4s; user=%s; host=%s; exit={%u %u}; session=%d; "
+	// 	"time={%ld %ld}\n",
+	// 	res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
+	// 	res->ut_exit.e_termination, res->ut_exit.e_exit, res->ut_session, res->ut_tv.tv_sec,
+	// 	res->ut_tv.tv_usec);
 	return res;
 }
 
@@ -216,10 +216,9 @@ func GetUtmpx() *Utmpx {
 	// convert C struct into Go struct for utmpx
 	cdata := C.GoBytes(unsafe.Pointer(p), C.sizeof_struct_utmpx)
 	buf := bytes.NewBuffer(cdata)
-
 	binary.Read(buf, hostEndian, g)
 
-	// convert C struct into Go struct for exit_status
+	// convert exit field
 	data2 := C.GoBytes(unsafe.Pointer(&p.ut_exit), C.sizeof_struct_exit_status)
 	buf2 := bytes.NewBuffer(data2)
 	s2 := &ExitStatus{}
@@ -227,7 +226,7 @@ func GetUtmpx() *Utmpx {
 	binary.Read(buf2, hostEndian, &s2.Exit)
 	g.Exit = *s2
 
-	// convert C struct into Go struct for timeval
+	// convert tv field
 	data3 := C.GoBytes(unsafe.Pointer(&p.ut_tv), C.sizeof_struct_timeval)
 	buf3 := bytes.NewBuffer(data3)
 	s3 := &TimeVal{}
@@ -235,21 +234,25 @@ func GetUtmpx() *Utmpx {
 	binary.Read(buf3, hostEndian, &s3.Usec)
 	g.Tv = *s3
 
+	// convert pid field
 	data2 = C.GoBytes(unsafe.Pointer(&p.ut_pid), C.sizeof_pid_t)
 	buf2 = bytes.NewBuffer(data2)
-	binary.Read(buf2, binary.LittleEndian, &(g.Pid))
+	binary.Read(buf2, hostEndian, &(g.Pid))
 
+	// convert id field
 	data2 = C.GoBytes(unsafe.Pointer(&p.ut_id), UTMPS_UT_IDSIZE)
 	buf2 = bytes.NewBuffer(data2)
-	binary.Read(buf2, binary.LittleEndian, &(g.Id))
+	binary.Read(buf2, hostEndian, &(g.Id))
 
+	// convert user field
 	data2 = C.GoBytes(unsafe.Pointer(&p.ut_user), UTMPS_UT_NAMESIZE)
 	buf2 = bytes.NewBuffer(data2)
-	binary.Read(buf2, binary.LittleEndian, &(g.User))
+	binary.Read(buf2, hostEndian, &(g.User))
 
+	// convert session field
 	data2 = C.GoBytes(unsafe.Pointer(&p.ut_session), C.sizeof_pid_t)
 	buf2 = bytes.NewBuffer(data2)
-	binary.Read(buf2, binary.LittleEndian, &(g.Session))
+	binary.Read(buf2, hostEndian, &(g.Session))
 	return g
 }
 

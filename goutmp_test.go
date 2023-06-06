@@ -1,7 +1,6 @@
 package goutmp
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -15,8 +14,8 @@ func TestGetUtmpx(t *testing.T) {
 	c:=0
 	// fmt.Printf("20018=%x\n", 20018)
 	for v != nil {
-		fmt.Printf("[Go] type=%d, pid=%d, line=%s, id=%s, user=%s, host=%s, exit=%v, session=%d, time=%v\nt=%s\n",
-			v.Type, v.GetPid(), v.GetLine(), v.GetId(), v.GetUser(), v.GetHost(), v.Exit, v.Session, v.Tv, v.GetTime())
+		// fmt.Printf("[Go] type=%d, pid=%d, line=%s, id=%s, user=%s, host=%s, exit=%v, session=%d, time=%v\nt=%s\n",
+		// 	v.Type, v.GetPid(), v.GetLine(), v.GetId(), v.GetUser(), v.GetHost(), v.Exit, v.Session, v.Tv, v.GetTime())
 		v = GetUtmpx()
 		c++
 	}
