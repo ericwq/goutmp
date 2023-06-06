@@ -59,10 +59,18 @@ void unpututmp(struct utmpx* ut) {
 	// system("echo ---- cleanup ----;who; last");
 }
 
-struct utmpx *getutmp() {
-	struct utmpx* res = NULL;
-	res = getutxent();
+struct utmpx* res = NULL;
 
+struct utmpx* getutmp() {
+	if (res != NULL)  // If 'res' was set via a previous call
+		memset(res, 0, sizeof(struct utmpx));
+	res = getutxent();
+	if (res == NULL) {
+		return NULL;
+	}
+
+	printf("[ C] user=%s; host=%s; id=%s; line=%s, time={%ld %ld}\n", res->ut_user, res->ut_host,
+		   res->ut_id, res->ut_line, res->ut_tv.tv_sec, res->ut_tv.tv_usec);
 	return res;
 }
 
@@ -159,24 +167,6 @@ func Unput_utmp(entry UtmpEntry) {
 	C.unpututmp(&entry.entry)
 }
 
-// https://github.com/llgoer/cgo-struct-array/blob/master/src/main.go
-// https://medium.com/@liamkelly17/working-with-packed-c-structs-in-cgo-224a0a3b708b
-func Get_utmp() *Utmpx {
-	g := &Utmpx{}
-
-	p := C.getutmp()
-	if p != nil {
-		return nil
-	} else {
-		cdata := C.GoBytes(unsafe.Pointer(p), C.sizeof_struct_utmpx)
-		buf := bytes.NewBuffer(cdata)
-		binary.Read(buf, binary.LittleEndian, &g.Type)
-		binary.Read(buf, binary.LittleEndian, &g.Pid)
-		binary.Read(buf, binary.LittleEndian, &g.Line)
-	}
-	return g
-}
-
 // Put the login app, username and originating host/IP to lastlog
 func Put_lastlog_entry(app, usr, ptsname, host string) {
 	u, e := user.Lookup(usr)
@@ -190,4 +180,84 @@ func Put_lastlog_entry(app, usr, ptsname, host string) {
 	_ = C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
 	// stat := C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
 	// fmt.Println("stat was:",stat)
+}
+
+// read the next utmpx record from utmp database
+func GetUtmpx() *Utmpx {
+	/*
+		https://github.com/llgoer/cgo-struct-array/blob/master/src/main.go
+		https://medium.com/@liamkelly17/working-with-packed-c-structs-in-cgo-224a0a3b708b
+		https://github.com/brgl/busybox/blob/master/coreutils/who.c
+	*/
+	g := &Utmpx{}
+
+	p := C.getutmp()
+	// p := C.getutxent()
+	if p == nil {
+		return nil
+	}
+	// convert C struct into Go struct for utmpx
+	cdata := C.GoBytes(unsafe.Pointer(p), C.sizeof_struct_utmpx)
+	buf := bytes.NewBuffer(cdata)
+	binary.Read(buf, binary.LittleEndian, &g.Type)
+	binary.Read(buf, binary.LittleEndian, &g.Pid)
+	binary.Read(buf, binary.LittleEndian, &g.Line)
+	binary.Read(buf, binary.LittleEndian, &g.Id)
+	binary.Read(buf, binary.LittleEndian, &g.User)
+	binary.Read(buf, binary.LittleEndian, &g.Host)
+	binary.Read(buf, binary.LittleEndian, &g.Session)
+	binary.Read(buf, binary.LittleEndian, &g.Addr_v6)
+
+	// convert C struct into Go struct for exit_status
+	data2 := C.GoBytes(unsafe.Pointer(&p.ut_exit), C.sizeof_struct_exit_status)
+	buf2 := bytes.NewBuffer(data2)
+	s2 := &ExitStatus{}
+	binary.Read(buf2, binary.LittleEndian, &s2.Termination)
+	binary.Read(buf2, binary.LittleEndian, &s2.Exit)
+	g.Exit = *s2
+
+	// convert C struct into Go struct for timeval
+	data3 := C.GoBytes(unsafe.Pointer(&p.ut_tv), C.sizeof_struct_timeval)
+	buf3 := bytes.NewBuffer(data3)
+	s3 := &TimeVal{}
+	binary.Read(buf3, binary.LittleEndian, &s3.Sec)
+	binary.Read(buf3, binary.LittleEndian, &s3.Usec)
+	g.Tv = *s3
+
+	return g
+}
+
+func (u *Utmpx) GetType() int {
+	return int(u.Type)
+}
+
+func (u *Utmpx) GetPid() int {
+	return int(u.Pid)
+}
+
+func (u *Utmpx) GetUser() string {
+	return B2S(u.User[:])
+}
+
+func (u *Utmpx) GetHost() string {
+	return B2S(u.Host[:])
+}
+
+func (u *Utmpx) GetLine() string {
+	return B2S(u.Line[:])
+}
+
+func (u *Utmpx) GetId() string {
+	return B2S(u.Id[:4])
+}
+
+// convert int8 arrary to string
+func B2S(bs []int8) string {
+	//	https://stackoverflow.com/questions/28848187/how-to-convert-int8-to-string
+
+	ba := make([]byte, 0, len(bs))
+	for _, b := range bs {
+		ba = append(ba, byte(b))
+	}
+	return string(ba)
 }

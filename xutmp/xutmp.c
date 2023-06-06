@@ -2,6 +2,7 @@
 #include <lastlog.h>
 
 typedef char char_t;
+struct utmpx* res = NULL;
 
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
 	// printf("effective GID=%u\n", getegid());
@@ -46,9 +47,15 @@ void unpututmp(struct utmpx* ut) {
 }
 
 struct utmpx* getutmp() {
-	struct utmpx* res = NULL;
+	if (res != NULL)  // If 'res' was set via a previous call
+		memset(res, 0, sizeof(struct utmpx));
 	res = getutxent();
+	if (res == NULL) {
+		return NULL;
+	}
 
+	printf("[ C] user=%s; host=%s; id=%s; line=%s, time={%ld %ld}\n", res->ut_user, res->ut_host,
+		   res->ut_id, res->ut_line, res->ut_tv.tv_sec, res->ut_tv.tv_usec);
 	return res;
 }
 

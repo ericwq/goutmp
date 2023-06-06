@@ -3,21 +3,12 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	utmps "github.com/ericwq/goutmp"
 )
 
 func main() {
-	for {
-		ut := utmps.Get_utmp()
-		if ut != nil {
-			fmt.Printf("Record: %s\n", ut.GetLine())
-		} else {
-			break
-		}
-	}
 	user := "ide"
 	host := "192.168.1.10"
 	utmp := utmps.Put_utmp(user, "/dev/pts/5", host)
