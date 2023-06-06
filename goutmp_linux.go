@@ -277,6 +277,10 @@ func (u *Utmpx) GetId() string {
 	return B2S(u.Id[:4])
 }
 
+func (u *Utmpx) GetTime() time.Time {
+	return time.Unix(u.Tv.Sec, u.Tv.Usec)
+}
+
 // convert int8 arrary to string
 func B2S(bs []int8) string {
 	//	https://stackoverflow.com/questions/28848187/how-to-convert-int8-to-string
