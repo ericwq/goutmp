@@ -11,9 +11,11 @@ func TestGetUtmpx(t *testing.T) {
 	if v == nil {
 		t.Errorf("#test failed to get utmp record. %v", v)
 	}
+
+	// fmt.Printf("20018=%x\n", 20018)
 	for v != nil {
-		fmt.Printf("[Go] type=%d, pid=0x%8x, line=%s, id=%s, user=%s, host=%s, time=%v \n",
-			v.Type, v.GetPid(), v.GetLine(), v.GetId(), v.GetUser(), v.GetHost(), v.Tv)
+		fmt.Printf("[Go] type=%d, pid=%d, line=%s, id=%s, user=%s, host=%s, exit=%v, session=%d, time=%v \n",
+			v.Type, v.GetPid(), v.GetLine(), v.GetId(), v.GetUser(), v.GetHost(), v.Exit, v.Session, v.Tv)
 		v = GetUtmpx()
 	}
 	if v != nil {

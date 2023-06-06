@@ -6,15 +6,23 @@ package goutmp
 import "C"
 
 type (
-        TimeVal    C.struct_timeval
-        ExitStatus C.struct_exit_status
-        Utmpx      C.struct_utmpx
+	TimeVal    C.struct_timeval
+	ExitStatus C.struct_exit_status
+	Utmpx      C.struct_utmpx
 )
 
 const (
-        _T_EMPTY         = C.EMPTY
-        _T_USER_PROCESS  = C.USER_PROCESS
-        _T_INIT_PROCESS  = C.INIT_PROCESS
-        _T_LOGIN_PROCESS = C.LOGIN_PROCESS
-        _T_DEAD_PROCESS  = C.DEAD_PROCESS
+	EMPTY         = C.EMPTY
+	BOOT_TIME     = C.BOOT_TIME
+	OLD_TIME      = C.OLD_TIME
+	NEW_TIME      = C.NEW_TIME
+	USER_PROCESS  = C.USER_PROCESS
+	INIT_PROCESS  = C.INIT_PROCESS
+	LOGIN_PROCESS = C.LOGIN_PROCESS
+	DEAD_PROCESS  = C.DEAD_PROCESS
+
+	UTMPS_UT_LINESIZE = C.UTMPS_UT_LINESIZE
+	UTMPS_UT_NAMESIZE = C.UTMPS_UT_NAMESIZE
+	UTMPS_UT_HOSTSIZE = C.UTMPS_UT_HOSTSIZE
+	UTMPS_UT_IDSIZE   = C.UTMPS_UT_IDSIZE
 )

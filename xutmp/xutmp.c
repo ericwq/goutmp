@@ -56,13 +56,18 @@ struct utmpx* getutmp() {
 
 	// unsigned char* charPtr = (unsigned char*)res;
 	// int i;
-	// printf("structure size : %zu bytes\n", sizeof(struct utmpx));
-	// for (i = 0; i < sizeof(struct utmpx); i++)
+	// int start = 32+4+4+2;
+	// int end = start+4;  // sizeof(struct utmpx); )
+	// for (i = start; i < end; i++)
 	// 	printf("%02x ", charPtr[i]);
+	// printf("\n");
 
-	printf("[ C] type=%d; pid=0x%8x; line=%s, id=%s; user=%s; host=%s; time={%ld %ld}\n",
-		   res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
-		   res->ut_tv.tv_sec, res->ut_tv.tv_usec);
+	printf(
+		"[ C] type=%d; pid=%d; line=%s, id=%s; user=%s; host=%s; exit={%u %u}, session=%d "
+		"time={%ld %ld}\n",
+		res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
+		res->ut_exit.e_termination, res->ut_exit.e_exit, res->ut_session, res->ut_tv.tv_sec,
+		res->ut_tv.tv_usec);
 	return res;
 }
 
