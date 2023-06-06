@@ -78,7 +78,7 @@ struct utmpx* getutmp() {
 	// printf("\n");
 
 	printf(
-		"[ C] type=%d; pid=%d; line=%s, id=%s; user=%s; host=%s; exit={%u %u}, session=%d "
+		"[ C] type=%d; pid=%d; line=%s, id=%.4s; user=%s; host=%s; exit={%u %u}, session=%d "
 		"time={%ld %ld}\n",
 		res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
 		res->ut_exit.e_termination, res->ut_exit.e_exit, res->ut_session, res->ut_tv.tv_sec,
