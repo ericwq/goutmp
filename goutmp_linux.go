@@ -15,7 +15,7 @@ package goutmp
 #include <utmps/utmps.h>
 #include <lastlog.h>
 
-typedef char char_t;
+// typedef char char_t;
 
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
 	// printf("effective GID=%u\n", getegid());

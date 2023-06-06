@@ -1,7 +1,7 @@
 #include "xutmp.h"
 #include <lastlog.h>
 
-typedef char char_t;
+// typedef char char_t;
 struct utmpx* res = NULL;
 
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
