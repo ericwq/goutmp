@@ -54,8 +54,15 @@ struct utmpx* getutmp() {
 		return NULL;
 	}
 
-	printf("[ C] user=%s; host=%s; id=%s; line=%s, time={%ld %ld}\n", res->ut_user, res->ut_host,
-		   res->ut_id, res->ut_line, res->ut_tv.tv_sec, res->ut_tv.tv_usec);
+	// unsigned char* charPtr = (unsigned char*)res;
+	// int i;
+	// printf("structure size : %zu bytes\n", sizeof(struct utmpx));
+	// for (i = 0; i < sizeof(struct utmpx); i++)
+	// 	printf("%02x ", charPtr[i]);
+
+	printf("[ C] type=%d; pid=0x%8x; line=%s, id=%s; user=%s; host=%s; time={%ld %ld}\n",
+		   res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
+		   res->ut_tv.tv_sec, res->ut_tv.tv_usec);
 	return res;
 }
 

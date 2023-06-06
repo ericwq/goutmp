@@ -69,8 +69,15 @@ struct utmpx* getutmp() {
 		return NULL;
 	}
 
-	printf("[ C] user=%s; host=%s; id=%s; line=%s, time={%ld %ld}\n", res->ut_user, res->ut_host,
-		   res->ut_id, res->ut_line, res->ut_tv.tv_sec, res->ut_tv.tv_usec);
+	// unsigned char* charPtr = (unsigned char*)res;
+	// int i;
+	// printf("structure size : %zu bytes\n", sizeof(struct utmpx));
+	// for (i = 0; i < sizeof(struct utmpx); i++)
+	// 	printf("%02x ", charPtr[i]);
+
+	printf("[ C] type=%d; pid=0x%8x; line=%s, id=%s; user=%s; host=%s; time={%ld %ld}\n",
+		   res->ut_type, res->ut_pid, res->ut_line, res->ut_id, res->ut_user, res->ut_host,
+		   res->ut_tv.tv_sec, res->ut_tv.tv_usec);
 	return res;
 }
 
@@ -182,6 +189,23 @@ func Put_lastlog_entry(app, usr, ptsname, host string) {
 	// fmt.Println("stat was:",stat)
 }
 
+var hostEndian binary.ByteOrder
+
+func init() {
+	// https://commandcenter.blogspot.com/2012/04/byte-order-fallacy.html
+	buf := [2]byte{}
+	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
+
+	switch buf {
+	case [2]byte{0xCD, 0xAB}:
+		hostEndian = binary.LittleEndian
+	case [2]byte{0xAB, 0xCD}:
+		hostEndian = binary.BigEndian
+	default:
+		panic("Could not determine native endianness.")
+	}
+}
+
 // read the next utmpx record from utmp database
 func GetUtmpx() *Utmpx {
 	/*
@@ -199,31 +223,34 @@ func GetUtmpx() *Utmpx {
 	// convert C struct into Go struct for utmpx
 	cdata := C.GoBytes(unsafe.Pointer(p), C.sizeof_struct_utmpx)
 	buf := bytes.NewBuffer(cdata)
-	binary.Read(buf, binary.LittleEndian, &g.Type)
-	binary.Read(buf, binary.LittleEndian, &g.Pid)
-	binary.Read(buf, binary.LittleEndian, &g.Line)
-	binary.Read(buf, binary.LittleEndian, &g.Id)
-	binary.Read(buf, binary.LittleEndian, &g.User)
-	binary.Read(buf, binary.LittleEndian, &g.Host)
-	binary.Read(buf, binary.LittleEndian, &g.Session)
-	binary.Read(buf, binary.LittleEndian, &g.Addr_v6)
+
+	binary.Read(buf, hostEndian, g)
 
 	// convert C struct into Go struct for exit_status
 	data2 := C.GoBytes(unsafe.Pointer(&p.ut_exit), C.sizeof_struct_exit_status)
 	buf2 := bytes.NewBuffer(data2)
 	s2 := &ExitStatus{}
-	binary.Read(buf2, binary.LittleEndian, &s2.Termination)
-	binary.Read(buf2, binary.LittleEndian, &s2.Exit)
+	binary.Read(buf2, hostEndian, &s2.Termination)
+	binary.Read(buf2, hostEndian, &s2.Exit)
 	g.Exit = *s2
 
 	// convert C struct into Go struct for timeval
 	data3 := C.GoBytes(unsafe.Pointer(&p.ut_tv), C.sizeof_struct_timeval)
 	buf3 := bytes.NewBuffer(data3)
 	s3 := &TimeVal{}
-	binary.Read(buf3, binary.LittleEndian, &s3.Sec)
-	binary.Read(buf3, binary.LittleEndian, &s3.Usec)
+	binary.Read(buf3, hostEndian, &s3.Sec)
+	binary.Read(buf3, hostEndian, &s3.Usec)
 	g.Tv = *s3
-
+	/*
+		binary.Read(buf, binary.LittleEndian, &g.Type)
+		binary.Read(buf, binary.LittleEndian, &g.Pid)
+		binary.Read(buf, binary.LittleEndian, &g.Line)
+		binary.Read(buf, binary.LittleEndian, &g.Id)
+		binary.Read(buf, binary.LittleEndian, &g.User)
+		binary.Read(buf, binary.LittleEndian, &g.Host)
+		binary.Read(buf, binary.LittleEndian, &g.Session)
+		binary.Read(buf, binary.LittleEndian, &g.Addr_v6)
+	*/
 	return g
 }
 
