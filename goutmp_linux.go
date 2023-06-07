@@ -265,19 +265,19 @@ func (u *Utmpx) GetPid() int {
 }
 
 func (u *Utmpx) GetUser() string {
-	return B2S(u.User[:])
+	return B2S(u.User[:UTMPS_UT_NAMESIZE])
 }
 
 func (u *Utmpx) GetHost() string {
-	return B2S(u.Host[:])
+	return B2S(u.Host[:UTMPS_UT_HOSTSIZE])
 }
 
 func (u *Utmpx) GetLine() string {
-	return B2S(u.Line[:])
+	return B2S(u.Line[:UTMPS_UT_LINESIZE])
 }
 
 func (u *Utmpx) GetId() string {
-	return B2S(u.Id[:4])
+	return B2S(u.Id[:UTMPS_UT_IDSIZE])
 }
 
 func (u *Utmpx) GetTime() time.Time {
