@@ -290,6 +290,9 @@ func B2S(bs []int8) string {
 
 	ba := make([]byte, 0, len(bs))
 	for _, b := range bs {
+		if b == 0 { // skip zero
+			continue
+		}
 		ba = append(ba, byte(b))
 	}
 	return string(ba)

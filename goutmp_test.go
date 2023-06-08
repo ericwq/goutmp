@@ -1,6 +1,7 @@
 package goutmp
 
 import (
+	// "fmt"
 	"testing"
 )
 
