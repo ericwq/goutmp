@@ -1,8 +1,79 @@
 #include "xutmp.h"
 #include <lastlog.h>
+#include <stdlib.h>
+#include <cstring>
 
 // typedef char char_t;
 struct utmpx* res = NULL;
+
+// #define DEV_PREFIX "/dev/"
+// #define DEV_PREFIX_LEN (sizeof(DEV_PREFIX) - 1)
+
+#define MIN(a_, b_) (((a_) < (b_)) ? (a_) : (b_))
+
+static int write_uwtmp_record(const char* user,
+							  const char* termName,
+							  const char* host,
+							  pid_t pid,
+							  int add) {
+	struct utmpx ut;
+	struct timeval tv;
+	size_t len, offset;
+
+	memset(&ut, 0, sizeof(ut));
+
+	memset(&tv, 0, sizeof(tv));
+	(void)gettimeofday(&tv, 0);
+
+	if (user) {
+		len = strlen(user);
+		memcpy(ut.ut_user, user, MIN(sizeof(ut.ut_user), len));
+	}
+
+	if (host) {
+		len = strlen(host);
+		memcpy(ut.ut_host, host, MIN(sizeof(ut.ut_host), len));
+	}
+
+	// len = strlen(term);
+	// memcpy(ut.ut_line, term, MIN(sizeof(ut.ut_line), len));
+	//
+	// offset = len <= sizeof(ut.ut_id) ? 0 : len - sizeof(ut.ut_id);
+	// memcpy(ut.ut_id, term + offset, len - offset);
+
+	// Set ut_line and ut_id based on the terminal associated with 'stdin'. This
+	// code assumes terminals named "/dev/[pt]t[sy]*". The "/dev/" dirname is 5
+	// characters; the "[pt]t[sy]" filename prefix is 3 characters (making 8
+	// characters in all).
+
+	len = strlen(termName + 5);
+	memcpy(ut.ut_line, termName + 5, MIN(sizeof(ut.ut_line), len));
+
+	len = strlen(termName + 8);
+	memcpy(ut.ut_id, termName + 8, MIN(sizeof(ut.ut_id), len));
+
+	if (add)
+		ut.ut_type = USER_PROCESS;
+	else
+		ut.ut_type = DEAD_PROCESS;
+
+	ut.ut_pid = pid;
+
+	ut.ut_tv.tv_sec = (__typeof__(ut.ut_tv.tv_sec))tv.tv_sec;
+	ut.ut_tv.tv_usec = (__typeof__(ut.ut_tv.tv_usec))tv.tv_usec;
+
+	setutxent();
+	if (!pututxline(&ut))
+		return EXIT_FAILURE;
+	// fatal_error("pututline: %s", strerror(errno));
+	endutxent();
+
+	(void)updwtmp(_PATH_WTMP, &ut);
+
+	// debug_msg("utmp/wtmp record %s for terminal '%s'",
+	// 	  add ? "added" : "removed", term);
+	return EXIT_SUCCESS;
+}
 
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
 	// printf("effective GID=%u\n", getegid());
