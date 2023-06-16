@@ -1,10 +1,28 @@
 # goutmp
 
-This is a modified golang module which support utmpx API. This is a temporary golang module. The next step is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is only a wrapper for `utmps` C client library.
+This is a golang client module which support utmpx API. The API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). The next stage is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The current implementation is a golang wrapper for `utmpx` C client library. I only test it on linux.
 
+## API
+
+```go
+// adds a login record to the database for the TTY belonging to
+// the pseudo-terminal slave file pts, using the username corresponding with the
+// real user ID of the calling process and the optional hostname host.
+func UtmpxAddRecord(pts *os.File, host string) bool
+
+// marks the login session as being closed for the TTY belonging to the
+// pseudo-terminal slave file pts, using the PID of the calling process
+func UtmpxRemoveRecord(pts *os.File) bool
+
+// read the next utmpx record from utmp database
+func GetUtmpx() *Utmpx
+
+// Put the login app, username and originating host/IP to lastlog
+func PutLastlogEntry(app, usr, ptsname, host string)
+```
 ## difference with original goutmp
 
-There are several differences between `ericwq/goutmp` and `RLabs/goutmp`. `ericwq/goutmp` follow the example from [The linux programming interface](https://www.oreilly.com/library/view/the-linux-programming/9781593272203/) (P829).
+There are several differences between `ericwq/goutmp` and `RLabs/goutmp`. `ericwq/goutmp` refer to `libutempter` and the example from [The linux programming interface](https://www.oreilly.com/library/view/the-linux-programming/9781593272203/) (P829).
 
 - `ericwq/goutmp` support `utmpx` API, while `RLabs/goutmp` support `utmp` API.
 - `ericwq/goutmp` update `wtmp` when update `utmp` record. This behavior is more reasonable.
@@ -141,39 +159,6 @@ drwxr-xr-x    1 root     root          4096 May 27 18:12 ..
 
 Please refer to [s6-setuidgid](https://skarnet.org/software/s6/s6-setuidgid.html) to accomplish the above work in a single command. Note: in docker environment, mounted local file system does not support set UID/GID operation.
 
-## original goutmp README.md
-[goutmp](https://gogs.blitter.com/RLabs/goutmp) - Minimal bindings to C stdlib pututmpx(), getutmpx() (/var/log/wtmp) and /var/log/lastlog
+## license
 
-Any Go program which allows user shell access should update the standard UNIX files which track user sessions: /var/log/wtmp (for the 'w' and 'who' commands), and /var/log/lastlog (the 'last' and 'lastlog' commands).
-
-```sh
-$ go doc -all
-package goutmp // import "blitter.com/go/goutmp"
-
-Golang bindings for basic login/utmp accounting
-
-FUNCTIONS
-
-func GetHost(addr string) (h string)
-    return remote client hostname or IP if host lookup fails addr is expected to
-    be of the format given by net.Addr.String() eg., "127.0.0.1:80" or "[::1]:80"
-
-func Put_lastlog_entry(app, usr, ptsname, host string)
-    Put the login app, username and originating host/IP to lastlog
-
-func Unput_utmp(entry UtmpEntry)
-    Remove a username/host entry from utmp
-
-
-TYPES
-
-type UtmpEntry struct {
-	// Has unexported fields.
-}
-    UtmpEntry wraps the C struct utmp
-
-func Put_utmp(user, ptsName, host string) UtmpEntry
-    Put a username and the originating host/IP to utmp
-```
-
-
+It's MIT license, please see the LICENSE file.
