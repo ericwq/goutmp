@@ -20,7 +20,8 @@ func main() {
 
 	// user := "ide"
 	host := "192.168.1.10"
-	_, pts, err := pty.Open()
+	ptmx, pts, err := pty.Open()
+	fmt.Printf("#test main pts=%s, ptmx=%s\n", pts.Name(), ptmx.Name())
 	if err != nil {
 		fmt.Printf("#test open pts error:%s\n", err)
 	}
