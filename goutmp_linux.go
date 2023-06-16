@@ -33,12 +33,12 @@ static int write_uwtmp_record(const char* user,
 	memset(&tv, 0, sizeof(tv));
 	(void)gettimeofday(&tv, 0);
 
-	if (user) {
+	if (user) {  // Logout record has null username
 		len = strlen(user);
 		memcpy(ut.ut_user, user, MIN(sizeof(ut.ut_user), len));
 	}
 
-	if (host) {
+	if (host) {  // Logout record has null host
 		len = strlen(host);
 		memcpy(ut.ut_host, host, MIN(sizeof(ut.ut_host), len));
 	}
@@ -81,48 +81,6 @@ static int write_uwtmp_record(const char* user,
 	// debug_msg("utmp/wtmp record %s for terminal '%s'",
 	// 	  add ? "added" : "removed", term);
 	return EXIT_SUCCESS;
-}
-
-void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
-	// printf("effective GID=%u\n", getegid());
-	// system("echo ---- pre ----;who");
-	memset(ut, 0, sizeof(struct utmpx));
-
-	ut->ut_type = USER_PROCESS;  // This is a user login
-	strncpy(ut->ut_user, uname, sizeof(ut->ut_user));
-	time((time_t*)&(ut->ut_tv.tv_sec));  // Stamp with current time
-	ut->ut_pid = getpid();
-
-	// Set ut_line and ut_id based on the terminal associated with 'stdin'. This code assumes
-	// terminals named "/dev/[pt]t[sy]*". The "/dev/" dirname is 5 characters; the "[pt]t[sy]"
-	// filename prefix is 3 characters (making 8 characters in all).
-
-	// devName = ttyname(STDIN_FILENO);
-	// if (devName == NULL)
-	// 	errExit("ttyname");
-	// if (strlen(devName) <= 8) // Should never happen
-	// 	fatal("Terminal name is too short: %s", devName);
-	strncpy(ut->ut_line, ptsname + 5, sizeof(ut->ut_line));
-	strncpy(ut->ut_id, ptsname + 8, sizeof(ut->ut_id));
-	strcpy(ut->ut_host, host);
-
-	setutxent();               // Rewind to start of utmp file
-	pututxline(ut);            // Overwrite previous utmp record
-	updwtmpx(_PATH_WTMP, ut);  // Append login record to wtmp
-	endutxent();
-	// system("echo ---- post ----;who");
-}
-
-void unpututmp(struct utmpx* ut) {
-	ut->ut_type = DEAD_PROCESS;              // Required for logout record
-	time((time_t*)&(ut->ut_tv.tv_sec));      // Stamp with logout time
-	memset(&(ut->ut_user), 0, UT_NAMESIZE);  // Logout record has null username
-	setutxent();
-	pututxline(ut);
-	updwtmpx(_PATH_WTMP, ut);  // Append logout record to wtmp
-	endutxent();
-
-	// system("echo ---- cleanup ----;who; last");
 }
 
 struct utmpx* res = NULL;
@@ -194,9 +152,9 @@ import (
 )
 
 // UtmpEntry wraps the C struct utmp
-type UtmpEntry struct {
-	entry C.struct_utmpx
-}
+// type UtmpEntry struct {
+// 	entry C.struct_utmpx
+// }
 
 // func (u *Utmpx) GetLine() string {
 // 	return unsafe.Slice(u.Line,32)
@@ -220,6 +178,7 @@ func GetHost(addr string) (h string) {
 	return
 }
 
+/*
 // Put a username and the originating host/IP to utmp
 func Put_utmp(user, ptsName, host string) UtmpEntry {
 	var entry UtmpEntry
@@ -229,10 +188,16 @@ func Put_utmp(user, ptsName, host string) UtmpEntry {
 	return entry
 }
 
+// Remove a username/host entry from utmp
+func Unput_utmp(entry UtmpEntry) {
+	C.unpututmp(&entry.entry)
+}
+*/
+
 // adds a login record to the database for the TTY belonging to
 // the pseudo-terminal slave file pts, using the username corresponding with the
 // real user ID of the calling process and the optional hostname host.
-func UtempterAddRecord(pts *os.File, host string) bool {
+func UtmpxAddRecord(pts *os.File, host string) bool {
 	user, err := user.Current()
 	if err != nil {
 		return false
@@ -248,52 +213,23 @@ func UtempterAddRecord(pts *os.File, host string) bool {
 		C.free(unsafe.Pointer(hostName))
 	}()
 
-	C.write_uwtmp_record(userName, termName, hostName, C.pid_t(pid), 1)
 	// C.pututmp(&entry, userName, ptsName, hostName)
-	return true
+	return C.write_uwtmp_record(userName, termName, hostName, C.pid_t(pid), 1) == 0
 }
 
 // marks the login session as being closed for the TTY belonging to the
-// pseudo-terminal master file descriptor fd.
-func UtempterRemoveRecord(pts *os.File) {
+// pseudo-terminal slave file pts, using the PID of the calling process
+func UtmpxRemoveRecord(pts *os.File) bool {
 	// git clone https://git.launchpad.net/ubuntu/+source/libutempter
-}
 
-// Remove a username/host entry from utmp
-func Unput_utmp(entry UtmpEntry) {
-	C.unpututmp(&entry.entry)
-}
+	termName := C.CString(pts.Name())
+	pid := os.Getpid()
+	defer func() {
+		C.free(unsafe.Pointer(termName))
+	}()
 
-// Put the login app, username and originating host/IP to lastlog
-func Put_lastlog_entry(app, usr, ptsname, host string) {
-	u, e := user.Lookup(usr)
-	if e != nil {
-		return
-	}
-	var uid uint32
-	fmt.Sscanf(u.Uid, "%d", &uid)
-
-	t := time.Now().Unix()
-	_ = C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
-	// stat := C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
-	// fmt.Println("stat was:",stat)
-}
-
-var hostEndian binary.ByteOrder
-
-func init() {
-	// https://commandcenter.blogspot.com/2012/04/byte-order-fallacy.html
-	buf := [2]byte{}
-	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
-
-	switch buf {
-	case [2]byte{0xCD, 0xAB}:
-		hostEndian = binary.LittleEndian
-	case [2]byte{0xAB, 0xCD}:
-		hostEndian = binary.BigEndian
-	default:
-		panic("Could not determine native endianness.")
-	}
+	// ut_type, ut_id and ut_line is required, ut_user must be zero
+	return C.write_uwtmp_record(nil, termName, nil, C.pid_t(pid), 1) == 0
 }
 
 // read the next utmpx record from utmp database
@@ -362,19 +298,19 @@ func (u *Utmpx) GetPid() int {
 }
 
 func (u *Utmpx) GetUser() string {
-	return B2S(u.User[:UTMPS_UT_NAMESIZE])
+	return b2s(u.User[:UTMPS_UT_NAMESIZE])
 }
 
 func (u *Utmpx) GetHost() string {
-	return B2S(u.Host[:UTMPS_UT_HOSTSIZE])
+	return b2s(u.Host[:UTMPS_UT_HOSTSIZE])
 }
 
 func (u *Utmpx) GetLine() string {
-	return B2S(u.Line[:UTMPS_UT_LINESIZE])
+	return b2s(u.Line[:UTMPS_UT_LINESIZE])
 }
 
 func (u *Utmpx) GetId() string {
-	return B2S(u.Id[:UTMPS_UT_IDSIZE])
+	return b2s(u.Id[:UTMPS_UT_IDSIZE])
 }
 
 func (u *Utmpx) GetTime() time.Time {
@@ -382,7 +318,7 @@ func (u *Utmpx) GetTime() time.Time {
 }
 
 // convert int8 arrary to string
-func B2S(bs []int8) string {
+func b2s(bs []int8) string {
 	//	https://stackoverflow.com/questions/28848187/how-to-convert-int8-to-string
 
 	ba := make([]byte, 0, len(bs))
@@ -393,4 +329,36 @@ func B2S(bs []int8) string {
 		ba = append(ba, byte(b))
 	}
 	return string(ba)
+}
+
+// Put the login app, username and originating host/IP to lastlog
+func PutLastlogEntry(app, usr, ptsname, host string) {
+	u, e := user.Lookup(usr)
+	if e != nil {
+		return
+	}
+	var uid uint32
+	fmt.Sscanf(u.Uid, "%d", &uid)
+
+	t := time.Now().Unix()
+	_ = C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
+	// stat := C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
+	// fmt.Println("stat was:",stat)
+}
+
+var hostEndian binary.ByteOrder
+
+func init() {
+	// https://commandcenter.blogspot.com/2012/04/byte-order-fallacy.html
+	buf := [2]byte{}
+	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
+
+	switch buf {
+	case [2]byte{0xCD, 0xAB}:
+		hostEndian = binary.LittleEndian
+	case [2]byte{0xAB, 0xCD}:
+		hostEndian = binary.BigEndian
+	default:
+		panic("Could not determine native endianness.")
+	}
 }

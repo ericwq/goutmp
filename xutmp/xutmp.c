@@ -1,7 +1,6 @@
 #include "xutmp.h"
 #include <lastlog.h>
 #include <stdlib.h>
-#include <cstring>
 
 // typedef char char_t;
 struct utmpx* res = NULL;
@@ -25,12 +24,12 @@ static int write_uwtmp_record(const char* user,
 	memset(&tv, 0, sizeof(tv));
 	(void)gettimeofday(&tv, 0);
 
-	if (user) {
+	if (user) {  // Logout record has null username
 		len = strlen(user);
 		memcpy(ut.ut_user, user, MIN(sizeof(ut.ut_user), len));
 	}
 
-	if (host) {
+	if (host) {  // Logout record has null host
 		len = strlen(host);
 		memcpy(ut.ut_host, host, MIN(sizeof(ut.ut_host), len));
 	}
