@@ -1,6 +1,6 @@
 # goutmp
 
-This is a golang client module which support utmpx API. The API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). The next stage is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The current implementation is a golang wrapper for `utmpx` C client library. I only test it on linux.
+This is a golang client module which support utmpx API. The API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). The next stage is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is a golang wrapper for `utmpx` C client library. Only test it on linux with [utmps](https://skarnet.org/software/utmps/).
 
 ## API
 
@@ -20,41 +20,6 @@ func GetUtmpx() *Utmpx
 // Put the login app, username and originating host/IP to lastlog
 func PutLastlogEntry(app, usr, ptsname, host string)
 ```
-## difference with original goutmp
-
-There are several differences between `ericwq/goutmp` and `RLabs/goutmp`. `ericwq/goutmp` refer to `libutempter` and the example from [The linux programming interface](https://www.oreilly.com/library/view/the-linux-programming/9781593272203/) (P829).
-
-- `ericwq/goutmp` support `utmpx` API, while `RLabs/goutmp` support `utmp` API.
-- `ericwq/goutmp` update `wtmp` when update `utmp` record. This behavior is more reasonable.
-- `ericwq/goutmp` support `tty` and `pts` device, while `ericwq/goutmp` only support `pts` device.
-
-## inline C or stand alone C module
-We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than stand alone C module.
-```c
-// #cgo pkg-config: utmps skalibs
-```
-
-Please use the following commands to build the stand alone C module, either staticly or dynamicly.
-```sh 
-$ cd ./xutmp/
-$ gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
-$ ar rcs libxutmp.a xutmp.o
-```
-
-```sh
-$ gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
-```
-
-The following cgo derective is for stand alone C module.
-```c
-/*
-#cgo CFLAGS: -I./xutmp
-#cgo LDFLAGS: -L${SRCDIR}/xutmp -lxutmp
-
-#include "xutmp.h"
-*/
-```
-
 ## prepare the utmps environment 
 
 Refer to [alpine container with openrc support](https://github.com/ericwq/s6) to build the docker image, run the following command to start container.
@@ -63,7 +28,7 @@ Refer to [alpine container with openrc support](https://github.com/ericwq/s6) to
   -h openrc-ssh --name openrc-ssh -d -p 5022:22 openrc-ssh:0.1.0
 ```
 
-Install `go` SDK and `utmps-dev` package to prepare building dependencies. Note, this command require root privilege.
+Install `go` SDK and `utmps-dev` package to prepare build dependencies. Note, the following command require root privilege.
 ```sh
 # apk add go utmps-dev
 ```
@@ -159,6 +124,42 @@ drwxr-xr-x    1 root     root          4096 May 27 18:12 ..
 
 Please refer to [s6-setuidgid](https://skarnet.org/software/s6/s6-setuidgid.html) to accomplish the above work in a single command. Note: in docker environment, mounted local file system does not support set UID/GID operation.
 
+## difference with original goutmp
+
+After search the internet, I found [RLabs/goutmp](https://gogs.blitter.com/RLabs/goutmp) and decide to use it to access `utmp` and `wutmp` database. As I learn more about utmp/utmpx API and `RLabs/goutmp`. I found it's time to create an alternative go module.
+
+There are several differences between `ericwq/goutmp` and `RLabs/goutmp`. `ericwq/goutmp` refer to `libutempter` and the example from [The linux programming interface](https://www.oreilly.com/library/view/the-linux-programming/9781593272203/) (P829).
+
+- `ericwq/goutmp` support `utmpx` API, while `RLabs/goutmp` support `utmp` API.
+- `ericwq/goutmp` update `wtmp` when update `utmp` record. This behavior is more reasonable.
+- `ericwq/goutmp` support `tty` and `pts` device, while `RLabs/goutmp` only support `pts` device.
+
+## inline C or stand alone C module
+We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than stand alone C module.
+```c
+// #cgo pkg-config: utmps skalibs
+```
+
+Please use the following commands to build the stand alone C module, either staticly or dynamicly.
+```sh
+$ cd ./xutmp/
+$ gcc -I/usr/include/utmps -lutmps -lskarnet -c -o xutmp.o xutmp.c
+$ ar rcs libxutmp.a xutmp.o
+```
+
+```sh
+$ gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
+```
+
+The following cgo derective is for stand alone C module.
+```c
+/*
+#cgo CFLAGS: -I./xutmp
+#cgo LDFLAGS: -L${SRCDIR}/xutmp -lxutmp
+
+#include "xutmp.h"
+*/
+```
 ## license
 
 It's MIT license, please see the LICENSE file.
