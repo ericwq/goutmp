@@ -141,6 +141,7 @@ struct utmpx* getutmp() {
 	return res;
 }
 
+// return 1 means success, otherwise return 0.
 int putlastlogentry(int64_t t, int uid, char* line, char* host) {
 	int retval = 0;
 	FILE* f;

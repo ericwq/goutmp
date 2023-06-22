@@ -110,6 +110,7 @@ struct utmpx* getutmp() {
 	return res;
 }
 
+// return 1 means success, otherwise return 0.
 int putlastlogentry(int64_t t, int uid, char* line, char* host) {
 	int retval = 0;
 	FILE* f;
@@ -331,17 +332,24 @@ func b2s(bs []int8) string {
 	return string(ba)
 }
 
-// Put the login app, username and originating host/IP to lastlog
-func PutLastlogEntry(app, usr, ptsname, host string) {
-	u, e := user.Lookup(usr)
+// Put the login line, username and originating host/IP to lastlog
+func PutLastlogEntry(line, userName, host string) bool {
+	u, e := user.Lookup(userName)
 	if e != nil {
-		return
+		return false
 	}
 	var uid uint32
 	fmt.Sscanf(u.Uid, "%d", &uid)
 
 	t := time.Now().Unix()
-	_ = C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
+	lineC := C.CString(line)
+	hostC := C.CString(host)
+	defer func() {
+		C.free(unsafe.Pointer(lineC))
+		C.free(unsafe.Pointer(hostC))
+	}()
+
+	return C.putlastlogentry(C.int64_t(t), C.int(uid), lineC, hostC) == 1
 	// stat := C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
 	// fmt.Println("stat was:",stat)
 }
