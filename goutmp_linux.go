@@ -354,6 +354,15 @@ func PutLastlogEntry(line, userName, host string) bool {
 	// fmt.Println("stat was:",stat)
 }
 
+// return true if we can read from the utmp data file
+func HasUtmpSupport() bool {
+	r := GetUtmpx()
+	if r != nil {
+		return true
+	}
+	return false
+}
+
 var hostEndian binary.ByteOrder
 
 func init() {
