@@ -144,10 +144,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"net"
 	"os"
 	"os/user"
-	"strings"
 	"time"
 	"unsafe"
 )
@@ -162,22 +160,6 @@ import (
 // 	return fmt.Sprintf("%s", u.Line)
 // }
 
-// return remote client hostname or IP if host lookup fails
-// addr is expected to be of the format given by net.Addr.String()
-// eg., "127.0.0.1:80" or "[::1]:80"
-func GetHost(addr string) (h string) {
-	if !strings.Contains(addr, "[") {
-		h = strings.Split(addr, ":")[0]
-	} else {
-		h = strings.Split(strings.Split(addr, "[")[1], "]")[0]
-	}
-	hList, e := net.LookupAddr(h)
-	// fmt.Printf("lookupAddr:%v\n", hList)
-	if e == nil {
-		h = hList[0]
-	}
-	return
-}
 
 /*
 // Put a username and the originating host/IP to utmp
@@ -355,13 +337,13 @@ func PutLastlogEntry(line, userName, host string) bool {
 }
 
 // return true if we can read from the utmp data file
-func HasUtmpSupport() bool {
-	r := GetUtmpx()
-	if r != nil {
-		return true
-	}
-	return false
-}
+// func HasUtmpSupport() bool {
+// 	r := GetUtmpx()
+// 	if r != nil {
+// 		return true
+// 	}
+// 	return false
+// }
 
 var hostEndian binary.ByteOrder
 
