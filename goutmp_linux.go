@@ -276,6 +276,59 @@ func (u *Utmpx) GetTime() time.Time {
 	return time.Unix(u.Tv.Sec, u.Tv.Usec)
 }
 
+func (u *Utmpx) SetUser(s string) {
+	data := []byte(s)
+	for i := range u.User {
+		if i < len(data) {
+			u.User[i] = int8(data[i])
+		} else {
+			break
+		}
+	}
+}
+
+func (u *Utmpx) SetHost(s string) {
+	data := []byte(s)
+	for i := range u.Host {
+		if i < len(data) {
+			u.Host[i] = int8(data[i])
+		} else {
+			break
+		}
+	}
+}
+
+func (u *Utmpx) SetLine(s string) {
+	data := []byte(s)
+	for i := range u.Line {
+		if i < len(data) {
+			u.Line[i] = int8(data[i])
+		} else {
+			break
+		}
+	}
+}
+
+func (u *Utmpx) SetId(id int) {
+	data := []byte(fmt.Sprintf("%d", id))
+
+	for i := range u.Id {
+		if i < len(data) && i < UTMPS_UT_IDSIZE{
+			u.Id[i] = int8(data[i])
+		} else {
+			break
+		}
+	}
+}
+
+func (u *Utmpx) SetPid(pid int) {
+	u.Pid = int32(pid)
+}
+
+func (u *Utmpx) SetType(t int) {
+	u.Type = int16(t)
+}
+
 // convert int8 arrary to string
 func b2s(bs []int8) string {
 	//	https://stackoverflow.com/questions/28848187/how-to-convert-int8-to-string
