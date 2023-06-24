@@ -150,33 +150,6 @@ import (
 	"unsafe"
 )
 
-// UtmpEntry wraps the C struct utmp
-// type UtmpEntry struct {
-// 	entry C.struct_utmpx
-// }
-
-// func (u *Utmpx) GetLine() string {
-// 	return unsafe.Slice(u.Line,32)
-// 	return fmt.Sprintf("%s", u.Line)
-// }
-
-
-/*
-// Put a username and the originating host/IP to utmp
-func Put_utmp(user, ptsName, host string) UtmpEntry {
-	var entry UtmpEntry
-
-	// log.Println("Put_utmp:host ", host, " user ", user)
-	C.pututmp(&entry.entry, C.CString(user), C.CString(ptsName), C.CString(host))
-	return entry
-}
-
-// Remove a username/host entry from utmp
-func Unput_utmp(entry UtmpEntry) {
-	C.unpututmp(&entry.entry)
-}
-*/
-
 // adds a login record to the database for the TTY belonging to
 // the pseudo-terminal slave file pts, using the username corresponding with the
 // real user ID of the calling process and the optional hostname host.
@@ -196,7 +169,8 @@ func UtmpxAddRecord(pts *os.File, host string) bool {
 		C.free(unsafe.Pointer(hostName))
 	}()
 
-	// C.pututmp(&entry, userName, ptsName, hostName)
+	// fmt.Printf("#UtmpxRemoveRecord write uwtmp record: user=%q, tty=%q, host=%q, pid=%d\n",
+	// 	user.Username, pts.Name(), host, pid)
 	return C.write_uwtmp_record(userName, termName, hostName, C.pid_t(pid), 1) == 0
 }
 
@@ -211,8 +185,10 @@ func UtmpxRemoveRecord(pts *os.File) bool {
 		C.free(unsafe.Pointer(termName))
 	}()
 
+	// fmt.Printf("#UtmpxRemoveRecord remove uwtmp record: user=%q, tty=%q, host=%q, pid=%d\n",
+	// 	"", pts.Name(), "", pid)
 	// ut_type, ut_id and ut_line is required, ut_user must be zero
-	return C.write_uwtmp_record(nil, termName, nil, C.pid_t(pid), 1) == 0
+	return C.write_uwtmp_record(nil, termName, nil, C.pid_t(pid), 0) == 0
 }
 
 // read the next utmpx record from utmp database
