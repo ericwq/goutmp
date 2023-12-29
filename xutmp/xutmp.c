@@ -66,14 +66,14 @@ static int write_uwtmp_record(const char* user,
 		return EXIT_FAILURE;
 	// fatal_error("pututline: %s", strerror(errno));
 	endutxent();
-
-	(void)updwtmp(_PATH_WTMP, &ut);
+	updwtmpx(_PATH_WTMP, &ut);
 
 	// debug_msg("utmp/wtmp record %s for terminal '%s'",
 	// 	  add ? "added" : "removed", term);
 	return EXIT_SUCCESS;
 }
 
+/*
 void pututmp(struct utmpx* ut, char* uname, char* ptsname, char* host) {
 	// printf("effective GID=%u\n", getegid());
 	// system("echo ---- pre ----;who");
@@ -115,6 +115,7 @@ void unpututmp(struct utmpx* ut) {
 
 	// system("echo ---- cleanup ----;who; last");
 }
+*/
 
 struct utmpx* getutmp() {
 	if (res != NULL)  // If 'res' was set via a previous call

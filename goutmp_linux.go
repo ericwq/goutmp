@@ -75,8 +75,7 @@ static int write_uwtmp_record(const char* user,
 		return EXIT_FAILURE;
 	// fatal_error("pututline: %s", strerror(errno));
 	endutxent();
-
-	(void)updwtmp(_PATH_WTMP, &ut);
+	updwtmpx(_PATH_WTMP, &ut);
 
 	// debug_msg("utmp/wtmp record %s for terminal '%s'",
 	// 	  add ? "added" : "removed", term);
@@ -153,6 +152,7 @@ import (
 // adds a login record to the database for the TTY belonging to
 // the pseudo-terminal slave file pts, using the username corresponding with the
 // real user ID of the calling process and the optional hostname host.
+// update utmp and wtmp at the same time
 func UtmpxAddRecord(pts *os.File, host string) bool {
 	user, err := user.Current()
 	if err != nil {
@@ -176,6 +176,7 @@ func UtmpxAddRecord(pts *os.File, host string) bool {
 
 // marks the login session as being closed for the TTY belonging to the
 // pseudo-terminal slave file pts, using the PID of the calling process
+// update utmp and wtmp at the same time
 func UtmpxRemoveRecord(pts *os.File) bool {
 	// git clone https://git.launchpad.net/ubuntu/+source/libutempter
 
@@ -313,7 +314,7 @@ func (u *Utmpx) SetId(id int) {
 	data := []byte(fmt.Sprintf("%d", id))
 
 	for i := range u.Id {
-		if i < len(data) && i < UTMPS_UT_IDSIZE{
+		if i < len(data) && i < UTMPS_UT_IDSIZE {
 			u.Id[i] = int8(data[i])
 		} else {
 			break
@@ -344,6 +345,7 @@ func b2s(bs []int8) string {
 }
 
 // Put the login line, username and originating host/IP to lastlog
+// TODO this function need to check the result of lastlog
 func PutLastlogEntry(line, userName, host string) bool {
 	u, e := user.Lookup(userName)
 	if e != nil {
