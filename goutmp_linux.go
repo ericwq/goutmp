@@ -152,7 +152,7 @@ import (
 // adds a login record to the database for the TTY belonging to
 // the pseudo-terminal slave file pts, using the username corresponding with the
 // real user ID of the calling process and the optional hostname host.
-// update utmp and wtmp at the same time
+// update utmp and wtmp within one call
 func UtmpxAddRecord(pts *os.File, host string) bool {
 	user, err := user.Current()
 	if err != nil {
@@ -176,7 +176,7 @@ func UtmpxAddRecord(pts *os.File, host string) bool {
 
 // marks the login session as being closed for the TTY belonging to the
 // pseudo-terminal slave file pts, using the PID of the calling process
-// update utmp and wtmp at the same time
+// update utmp and wtmp within one call
 func UtmpxRemoveRecord(pts *os.File) bool {
 	// git clone https://git.launchpad.net/ubuntu/+source/libutempter
 

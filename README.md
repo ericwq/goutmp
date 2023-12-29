@@ -8,10 +8,12 @@ This is a golang client module which support utmpx API. The API is inspired by [
 // adds a login record to the database for the TTY belonging to
 // the pseudo-terminal slave file pts, using the username corresponding with the
 // real user ID of the calling process and the optional hostname host.
+// update utmp and wtmp within one call
 func UtmpxAddRecord(pts *os.File, host string) bool
 
 // marks the login session as being closed for the TTY belonging to the
 // pseudo-terminal slave file pts, using the PID of the calling process
+// update utmp and wtmp within one call
 func UtmpxRemoveRecord(pts *os.File) bool
 
 // read the next utmpx record from utmp database
