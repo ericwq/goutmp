@@ -1,23 +1,25 @@
+// Copyright 2023~2024 wangqi. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package goutmp
 
-import "os"
-
-func UtmpxAddRecord(pts *os.File, host string) bool {
-	// not implement
+func AddRecord(ptsName string, user string, host string, pid int) bool {
+	// fmt.Fprintf(os.Stderr, "unimplement %s\n", "AddRecord()")
 	return false
 }
 
-func UtmpxRemoveRecord(pts *os.File) bool {
-	// not implement
+func RemoveRecord(ptsName string, pid int) bool {
+	// fmt.Fprintf(os.Stderr, "unimplement %s\n", "RemoveRecord()")
 	return false
 }
 
-func GetUtmpx() *Utmpx {
-	// not implement
+func GetRecord() *Utmpx {
+	// fmt.Fprintf(os.Stderr, "unimplement %s\n", "GetRecord()")
 	return nil
 }
 
-func PutLastlogEntry(line, userName, host string) bool {
-	// not implement
+func AddLastLog(line, userName, host string) bool {
+	// fmt.Fprintf(os.Stderr, "unimplement %s\n", "PutLastlogEntry()")
 	return false
 }

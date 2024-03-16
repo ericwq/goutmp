@@ -1,3 +1,7 @@
+// Copyright 2023~2024 wangqi. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package goutmp
 
 /*
@@ -143,26 +147,19 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"os"
 	"os/user"
 	"time"
 	"unsafe"
 )
 
 // adds a login record to the database for the TTY belonging to
-// the pseudo-terminal slave file pts, using the username corresponding with the
-// real user ID of the calling process and the optional hostname host.
+// the pseudo-terminal slave file pts, using the specified user name
+// hostname host and process PID.
 // update utmp and wtmp within one call
-func UtmpxAddRecord(pts *os.File, host string) bool {
-	user, err := user.Current()
-	if err != nil {
-		return false
-	}
-
-	termName := C.CString(pts.Name())
-	userName := C.CString(user.Username)
+func AddRecord(ptsName string, user string, host string, pid int) bool {
+	termName := C.CString(ptsName)
+	userName := C.CString(user)
 	hostName := C.CString(host)
-	pid := os.Getpid()
 	defer func() {
 		C.free(unsafe.Pointer(termName))
 		C.free(unsafe.Pointer(userName))
@@ -175,13 +172,12 @@ func UtmpxAddRecord(pts *os.File, host string) bool {
 }
 
 // marks the login session as being closed for the TTY belonging to the
-// pseudo-terminal slave file pts, using the PID of the calling process
+// pseudo-terminal slave file pts, using the specified process PID
 // update utmp and wtmp within one call
-func UtmpxRemoveRecord(pts *os.File) bool {
+func RemoveRecord(ptsName string, pid int) bool {
 	// git clone https://git.launchpad.net/ubuntu/+source/libutempter
 
-	termName := C.CString(pts.Name())
-	pid := os.Getpid()
+	termName := C.CString(ptsName)
 	defer func() {
 		C.free(unsafe.Pointer(termName))
 	}()
@@ -193,7 +189,7 @@ func UtmpxRemoveRecord(pts *os.File) bool {
 }
 
 // read the next utmpx record from utmp database
-func GetUtmpx() *Utmpx {
+func GetRecord() *Utmpx {
 	/*
 		https://github.com/llgoer/cgo-struct-array/blob/master/src/main.go
 		https://medium.com/@liamkelly17/working-with-packed-c-structs-in-cgo-224a0a3b708b
@@ -249,104 +245,9 @@ func GetUtmpx() *Utmpx {
 	return g
 }
 
-func (u *Utmpx) GetType() int {
-	return int(u.Type)
-}
-
-func (u *Utmpx) GetPid() int {
-	return int(u.Pid)
-}
-
-func (u *Utmpx) GetUser() string {
-	return b2s(u.User[:UTMPS_UT_NAMESIZE])
-}
-
-func (u *Utmpx) GetHost() string {
-	return b2s(u.Host[:UTMPS_UT_HOSTSIZE])
-}
-
-func (u *Utmpx) GetLine() string {
-	return b2s(u.Line[:UTMPS_UT_LINESIZE])
-}
-
-func (u *Utmpx) GetId() string {
-	return b2s(u.Id[:UTMPS_UT_IDSIZE])
-}
-
-func (u *Utmpx) GetTime() time.Time {
-	return time.Unix(u.Tv.Sec, u.Tv.Usec)
-}
-
-func (u *Utmpx) SetUser(s string) {
-	data := []byte(s)
-	for i := range u.User {
-		if i < len(data) {
-			u.User[i] = int8(data[i])
-		} else {
-			break
-		}
-	}
-}
-
-func (u *Utmpx) SetHost(s string) {
-	data := []byte(s)
-	for i := range u.Host {
-		if i < len(data) {
-			u.Host[i] = int8(data[i])
-		} else {
-			break
-		}
-	}
-}
-
-func (u *Utmpx) SetLine(s string) {
-	data := []byte(s)
-	for i := range u.Line {
-		if i < len(data) {
-			u.Line[i] = int8(data[i])
-		} else {
-			break
-		}
-	}
-}
-
-func (u *Utmpx) SetId(id int) {
-	data := []byte(fmt.Sprintf("%d", id))
-
-	for i := range u.Id {
-		if i < len(data) && i < UTMPS_UT_IDSIZE {
-			u.Id[i] = int8(data[i])
-		} else {
-			break
-		}
-	}
-}
-
-func (u *Utmpx) SetPid(pid int) {
-	u.Pid = int32(pid)
-}
-
-func (u *Utmpx) SetType(t int) {
-	u.Type = int16(t)
-}
-
-// convert int8 arrary to string
-func b2s(bs []int8) string {
-	//	https://stackoverflow.com/questions/28848187/how-to-convert-int8-to-string
-
-	ba := make([]byte, 0, len(bs))
-	for _, b := range bs {
-		if b == 0 { // skip zero
-			continue
-		}
-		ba = append(ba, byte(b))
-	}
-	return string(ba)
-}
-
-// Put the login line, username and originating host/IP to lastlog
-// TODO this function need to check the result of lastlog
-func PutLastlogEntry(line, userName, host string) bool {
+// Add a record to last log, with the specified login line, username and
+// originating host/IP.
+func AddLastLog(line, userName, host string) bool {
 	u, e := user.Lookup(userName)
 	if e != nil {
 		return false
@@ -365,30 +266,4 @@ func PutLastlogEntry(line, userName, host string) bool {
 	return C.putlastlogentry(C.int64_t(t), C.int(uid), lineC, hostC) == 1
 	// stat := C.putlastlogentry(C.int64_t(t), C.int(uid), C.CString(app), C.CString(host))
 	// fmt.Println("stat was:",stat)
-}
-
-// return true if we can read from the utmp data file
-// func HasUtmpSupport() bool {
-// 	r := GetUtmpx()
-// 	if r != nil {
-// 		return true
-// 	}
-// 	return false
-// }
-
-var hostEndian binary.ByteOrder
-
-func init() {
-	// https://commandcenter.blogspot.com/2012/04/byte-order-fallacy.html
-	buf := [2]byte{}
-	*(*uint16)(unsafe.Pointer(&buf[0])) = uint16(0xABCD)
-
-	switch buf {
-	case [2]byte{0xCD, 0xAB}:
-		hostEndian = binary.LittleEndian
-	case [2]byte{0xAB, 0xCD}:
-		hostEndian = binary.BigEndian
-	default:
-		panic("Could not determine native endianness.")
-	}
 }

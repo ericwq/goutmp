@@ -1,19 +1,16 @@
+// Copyright 2023~2024 wangqi. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package goutmp
 
 import (
 	// "fmt"
+
 	"testing"
 )
 
-func TestGetUtmpxDarwin(t *testing.T) {
-	v := GetUtmpx()
-
-	if v != nil {
-		t.Errorf("#test expect nil, get utmp record. %v", v)
-	}
-}
-
-func TestDeviceExistsDarwin(t *testing.T) {
+func TestDeviceExists(t *testing.T) {
 	tc := []struct {
 		label  string
 		line   string
@@ -21,7 +18,6 @@ func TestDeviceExistsDarwin(t *testing.T) {
 	}{
 		{"ttys001", "ttys001", true},
 		{"ttys1", "ttys1", true},
-		// {"tty0", "tty0", true}, // this one doesn't work for some linux container,
 		{"tty/1", "tty/1", false},
 	}
 
@@ -35,3 +31,43 @@ func TestDeviceExistsDarwin(t *testing.T) {
 	}
 }
 
+func TestUtmpxAPI(t *testing.T) {
+	tc := []struct {
+		label  string
+		expect bool
+	}{
+		{"AddRecord", false},
+		{"RemoveRecord", false},
+		{"GetRecord", false},
+		{"PutLastlogEntry", false},
+	}
+
+	for _, v := range tc {
+		t.Run(v.label, func(t *testing.T) {
+
+			switch v.label {
+			case "AddRecord":
+				ret := AddRecord("", "", "", 0)
+				if ret {
+					t.Errorf("AddRecord is not implemented")
+				}
+			case "RemoveRecord":
+				ret := RemoveRecord("", 0)
+				if ret {
+					t.Errorf("RemoveRecord is not implemented")
+				}
+			case "GetRecord":
+				ret := GetRecord()
+				if ret != nil {
+					t.Errorf("GetRecord is not implemented")
+				}
+			case "PutLastlogEntry":
+				ret := AddLastLog("", "", "")
+				if ret {
+					t.Errorf("PutLastlogEntry is not implemented")
+				}
+			}
+
+		})
+	}
+}

@@ -1,23 +1,27 @@
+// Copyright 2023~2024 wangqi. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package goutmp
 
 import (
-	// "fmt"
+	"os/user"
 	"testing"
 )
 
-func TestGetUtmpx(t *testing.T) {
-	v := GetUtmpx()
+func TestGetRecord(t *testing.T) {
+	v := GetRecord()
 
 	if v == nil {
-		t.Errorf("#test failed to get utmp record. %v", v)
+		t.Skip("this system doesn't support utmpx access.")
 	}
 
 	c := 0
-	// fmt.Printf("20018=%x\n", 20018)
 	for v != nil {
-		// fmt.Printf("[Go] type=%d, pid=%d, line=%s, id=%s, user=%s, host=%s, exit=%v, session=%d, time=%v\nt=%s\n",
-		// 	v.Type, v.GetPid(), v.GetLine(), v.GetId(), v.GetUser(), v.GetHost(), v.Exit, v.Session, v.Tv, v.GetTime())
-		v = GetUtmpx()
+		t.Logf("type=%2d, pid=%6d, line=%7s, id=%2d, user=%10s, host=%29s, exit=%v, session=%d, time=%s\n",
+			v.Type, v.GetPid(), v.GetLine(), v.GetId(), v.GetUser(),
+			v.GetHost(), v.Exit, v.Session, v.GetTime())
+		v = GetRecord()
 		c++
 	}
 	if v != nil {
@@ -34,7 +38,7 @@ func TestDeviceExists(t *testing.T) {
 		line   string
 		expect bool
 	}{
-		{"pts/1", "pts/1", true},
+		{"pts/0", "pts/0", true},
 		{"tty", "tty", true},
 		// {"tty0", "tty0", true}, // this one doesn't work for some linux container,
 		{"tty/1", "tty/1", false},
@@ -47,5 +51,28 @@ func TestDeviceExists(t *testing.T) {
 				t.Errorf("#test %s expect %t, got %t\n", v.label, v.expect, got)
 			}
 		})
+	}
+}
+
+func TestUtmpxAPI(t *testing.T) {
+	// for normal user, they can't update utmp/wtmp
+	v := AddRecord("/devpts/0", "unknow", "192.168.0.1", 12)
+	if v {
+		t.Error("#test AddRecord() failed")
+	}
+
+	v = RemoveRecord("/devpts/0", 12)
+	if v {
+		t.Error("#test RemoveRecord() failed")
+	}
+
+	u, _ := user.Current()
+	v = AddLastLog("/dev/pts/0", u.Username, "127.0.0.1")
+	if v {
+		t.Error("#test PutLastlogEntry() failed")
+	}
+	v = AddLastLog("/dev/pts/0", "unknow", "127.0.0.1")
+	if v {
+		t.Error("#test PutLastlogEntry() failed")
 	}
 }
