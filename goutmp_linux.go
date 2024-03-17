@@ -152,10 +152,14 @@ import (
 	"unsafe"
 )
 
-// adds a login record to the database for the TTY belonging to
-// the pseudo-terminal slave file pts, using the specified user name
-// hostname host and process PID.
-// update utmp and wtmp within one call
+const (
+	_ADD    = 1
+	_REMOVE = 0
+)
+
+// called when user login, adds a login utmp/wtmp record to database with the specified
+// pseudo-terminal device name, user name, host name and process PID.
+// this fuction will update both utmp and wtmp within one call
 func AddRecord(ptsName string, user string, host string, pid int) bool {
 	termName := C.CString(ptsName)
 	userName := C.CString(user)
@@ -166,14 +170,12 @@ func AddRecord(ptsName string, user string, host string, pid int) bool {
 		C.free(unsafe.Pointer(hostName))
 	}()
 
-	// fmt.Printf("#UtmpxRemoveRecord write uwtmp record: user=%q, tty=%q, host=%q, pid=%d\n",
-	// 	user.Username, pts.Name(), host, pid)
-	return C.write_uwtmp_record(userName, termName, hostName, C.pid_t(pid), 1) == 0
+	return C.write_uwtmp_record(userName, termName, hostName, C.pid_t(pid), _ADD) == 0
 }
 
-// marks the login session as being closed for the TTY belonging to the
-// pseudo-terminal slave file pts, using the specified process PID
-// update utmp and wtmp within one call
+// called when user logout, marks a login session as being closed with the specified
+// pseudo-terminal device name, process PID.
+// this fuction will update both utmp and wtmp within one call
 func RemoveRecord(ptsName string, pid int) bool {
 	// git clone https://git.launchpad.net/ubuntu/+source/libutempter
 
@@ -182,10 +184,8 @@ func RemoveRecord(ptsName string, pid int) bool {
 		C.free(unsafe.Pointer(termName))
 	}()
 
-	// fmt.Printf("#UtmpxRemoveRecord remove uwtmp record: user=%q, tty=%q, host=%q, pid=%d\n",
-	// 	"", pts.Name(), "", pid)
-	// ut_type, ut_id and ut_line is required, ut_user must be zero
-	return C.write_uwtmp_record(nil, termName, nil, C.pid_t(pid), 0) == 0
+	// ut_user and ut_host must be zero, ut_id and ut_line, ut_pid is required
+	return C.write_uwtmp_record(nil, termName, nil, C.pid_t(pid), _REMOVE) == 0
 }
 
 // read the next utmpx record from utmp database

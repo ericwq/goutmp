@@ -5,22 +5,23 @@ This is a golang client module which support utmpx API. The API is inspired by [
 ## API
 
 ```go
-// adds a login record to the database for the TTY belonging to
-// the pseudo-terminal slave file pts, using the username corresponding with the
-// real user ID of the calling process and the optional hostname host.
-// update utmp and wtmp within one call
-func UtmpxAddRecord(pts *os.File, host string) bool
+// called when user login, adds a login utmp/wtmp record to database with the specified
+// pseudo-terminal device name, user name, host name and process PID.
+// this fuction will update both utmp and wtmp within one call
+func AddRecord(ptsName string, user string, host string, pid int) bool {
 
-// marks the login session as being closed for the TTY belonging to the
-// pseudo-terminal slave file pts, using the PID of the calling process
-// update utmp and wtmp within one call
-func UtmpxRemoveRecord(pts *os.File) bool
+// called when user logout, marks a login session as being closed with the specified
+// pseudo-terminal device name, process PID.
+// this fuction will update both utmp and wtmp within one call
+func RemoveRecord(ptsName string, pid int) bool {
 
 // read the next utmpx record from utmp database
 func GetUtmpx() *Utmpx
 
-// Put the login app, username and originating host/IP to lastlog
-func PutLastlogEntry(app, usr, ptsname, host string)
+// Add a record to last log, with the specified login line, username and
+// originating host/IP.
+func AddLastLog(line, userName, host string) bool {
+
 ```
 ## prepare the utmps environment 
 
