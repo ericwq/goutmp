@@ -1,6 +1,13 @@
 # goutmp
 
-This is a golang client module which support utmpx API. The API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). The next stage is to create a pure golang client module to support [utmps](https://skarnet.org/software/utmps/). Currenly, The implementation is a golang wrapper for `utmpx` C client library. Only test it on linux with [utmps](https://skarnet.org/software/utmps/).
+This is a golang client module which support `utmpx` API: which includes [utmpx](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/utmpx.h.html) and [wtmp](https://man7.org/linux/man-pages/man3/updwtmpx.3.html). The new API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). Currenly, The implementation is a golang wrapper for `utmpx` C library. On alpine linux (musl based) it will call [utmps](https://skarnet.org/software/utmps/) through utmpx API. On other linux (glibc based) it will call glibc utmpx API.
+
+To use goutmp module in your golang development, you need to provide additional build tags.
+
+```sh
+go build -tags utmps . # for alpine linux
+go build -tags utmp .  # for glibc based linux
+```
 
 ## API
 
@@ -16,7 +23,7 @@ func AddRecord(ptsName string, user string, host string, pid int) bool {
 func RemoveRecord(ptsName string, pid int) bool {
 
 // read the next utmpx record from utmp database
-func GetUtmpx() *Utmpx
+func GetRecord() *Utmpx
 
 // Add a record to last log, with the specified login line, username and
 // originating host/IP.
@@ -70,7 +77,7 @@ Set GID for the application. Note, local mounted file system in docker (such as 
 
 ```sh
 openrc-ssh:~/develop/goutmp$ cd goutmp
-openrc-ssh:~/develop/goutmp$ go build main/test_linux.go
+openrc-ssh:~/develop/goutmp$ go build -tags utmps main/test_linux.go
 openrc-ssh:~/develop/goutmp$ ls -al
 total 2116
 drwxr-xr-x   11 ide      develop        352 May 29 22:50 .
