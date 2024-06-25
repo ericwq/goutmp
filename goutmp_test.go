@@ -17,6 +17,7 @@ func TestHasUtmpSupport(t *testing.T) {
 
 func TestUtmpxAccess(t *testing.T) {
 	tc := []struct {
+		time  time.Time
 		label string
 		user  string
 		host  string
@@ -24,9 +25,8 @@ func TestUtmpxAccess(t *testing.T) {
 		id    int
 		pid   int
 		typ0  int
-		time  time.Time
 	}{
-		{"normal", "john", "192.168.0.1", "pts/0", 120, 512, USER_PROCESS, time.Now()},
+		{label: "normal", user: "john", host: "192.168.0.1", line: "pts/0", id: 120, pid: 512, typ0: USER_PROCESS, time: time.Now()},
 	}
 
 	for _, v := range tc {

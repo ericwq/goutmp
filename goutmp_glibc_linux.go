@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-//go:build cgo && utmp
+//go:build utmp
 
 package goutmp
 
@@ -159,7 +159,7 @@ const (
 
 // called when user login, adds a login utmp/wtmp record to database with the specified
 // pseudo-terminal device name, user name, host name and process PID.
-// this fuction will update both utmp and wtmp within one call
+// this function will update both utmp and wtmp within one call
 func AddRecord(ptsName string, user string, host string, pid int) bool {
 	termName := C.CString(ptsName)
 	userName := C.CString(user)
@@ -175,7 +175,7 @@ func AddRecord(ptsName string, user string, host string, pid int) bool {
 
 // called when user logout, marks a login session as being closed with the specified
 // pseudo-terminal device name, process PID.
-// this fuction will update both utmp and wtmp within one call
+// this function will update both utmp and wtmp within one call
 func RemoveRecord(ptsName string, pid int) bool {
 	// git clone https://git.launchpad.net/ubuntu/+source/libutempter
 

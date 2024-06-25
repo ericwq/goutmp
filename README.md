@@ -1,6 +1,6 @@
 # goutmp
 
-This is a golang client module which support `utmpx` API: which includes [utmpx](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/utmpx.h.html) and [wtmp](https://man7.org/linux/man-pages/man3/updwtmpx.3.html). The new API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). Currenly, The implementation is a golang wrapper for `utmpx` C library. On alpine linux (musl based) it will call [utmps](https://skarnet.org/software/utmps/) through utmpx API. On other linux (glibc based) it will call glibc utmpx API.
+This is a golang client module which support `utmpx` API: which includes [utmpx](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/utmpx.h.html) and [wtmp](https://man7.org/linux/man-pages/man3/updwtmpx.3.html). The new API is inspired by [libutempter](https://manpages.ubuntu.com/manpages/lunar/en/man3/utempter.3.html). Currently, The implementation is a golang wrapper for `utmpx` C library. On alpine linux (musl based) it will call [utmps](https://skarnet.org/software/utmps/) through utmpx API. On other linux (glibc based) it will call glibc utmpx API.
 
 To use goutmp module in your golang development, you need to provide additional build tags.
 
@@ -14,12 +14,12 @@ go build -tags utmp .  # for glibc based linux
 ```go
 // called when user login, adds a login utmp/wtmp record to database with the specified
 // pseudo-terminal device name, user name, host name and process PID.
-// this fuction will update both utmp and wtmp within one call
+// this function will update both utmp and wtmp within one call
 func AddRecord(ptsName string, user string, host string, pid int) bool {
 
 // called when user logout, marks a login session as being closed with the specified
 // pseudo-terminal device name, process PID.
-// this fuction will update both utmp and wtmp within one call
+// this function will update both utmp and wtmp within one call
 func RemoveRecord(ptsName string, pid int) bool {
 
 // read the next utmpx record from utmp database
@@ -30,7 +30,14 @@ func GetRecord() *Utmpx
 func AddLastLog(line, userName, host string) bool {
 
 ```
-## prepare the utmps environment 
+## Edit in nvim
+To edit or browse source code in this project, you need to set the following environment variable for [nvide](../nvide/README.md)
+```sh
+export GOFLAGS="-tags=utmps"    # for musl based linux, such as: alpine
+export GOFLAGS="-tags=utmp"     # for glibc based linux, such as: fedora, redhat
+```
+
+## Prepare the utmps environment
 
 Refer to [alpine container with openrc support](https://github.com/ericwq/s6) to build the docker image, run the following command to start container.
 ```sh
@@ -63,7 +70,7 @@ USER       TTY            HOST               LOGIN        TIME
 root       pts/1          172.17.0.1         May 29 22:48
 ```
 
-## build and run goutmp application.
+## Build and run goutmp application.
 
 Now, it's time to build your application and run it according to the following section.
 
@@ -73,10 +80,9 @@ Add user `ide` into `utmp` group. This is required by `utmps`. Note, this comman
 openrc-ssh:~# adduser ide utmp
 ```
 
-Set GID for the application. Note, local mounted file system in docker (such as the ~/develop directory) doesn't support set GID appplication. That is why we move it to the `/tmp` directory.
+Set GID for the application. Note, local mounted file system in docker (such as the ~/develop directory) doesn't support set GID application. That is why we move it to the `/tmp` directory.
 
 ```sh
-openrc-ssh:~/develop/goutmp$ cd goutmp
 openrc-ssh:~/develop/goutmp$ go build -tags utmps main/test_linux.go
 openrc-ssh:~/develop/goutmp$ ls -al
 total 2116
@@ -93,8 +99,8 @@ drwxr-xr-x    3 ide      develop         96 May 28 20:11 main
 drwxr-xr-x    6 ide      develop        192 May 28 19:13 xutmp
 openrc-ssh:~/develop/goutmp$ cp test_linux  /tmp/
 openrc-ssh:~/develop/goutmp$ cd /tmp
-openrc-ssh:/tmp$ chgrp utmp test_linux
-openrc-ssh:/tmp$ chmod g+s test_linux
+openrc-ssh:/tmp$ chgrp utmp test_linux  # run as root
+openrc-ssh:/tmp$ chmod g+s test_linux   # run as root
 openrc-ssh:/tmp$ ls -al
 total 2096
 drwxrwxrwt    1 root     root          4096 May 29 22:50 .
@@ -103,10 +109,10 @@ drwxr-xr-x    1 root     root          4096 May 29 22:41 ..
 openrc-ssh:/tmp$ ./test_linux
 ```
 
-## how to set effective GID for your service
+## How to set effective GID for your service
 You has a service and want that service has the privileges to access `utmps` service. Then you need to set the effective GID for your service to be `utmp`. The `utmps` service require effective GID of `utmp`. Refer to [The utmps-utmpd program](https://skarnet.org/software/utmps/utmps-utmpd.html) for detail.
 
-Let's say your service program is `prog2`. You need set GID for `prog2`. Let's assume that user `ide` belongs to two groups: `develop` and `utmp`. You can use `$ adduser ide utmp` command to achive it.
+Let's say your service program is `prog2`. You need set GID for `prog2`. Let's assume that user `ide` belongs to two groups: `develop` and `utmp`. You can use `$ adduser ide utmp` command to achieve it.
 
 - first, change the group of `prog2` to `utmp`.
 - second, set-GID for `prog2`.
@@ -134,7 +140,7 @@ drwxr-xr-x    1 root     root          4096 May 27 18:12 ..
 
 Please refer to [s6-setuidgid](https://skarnet.org/software/s6/s6-setuidgid.html) to accomplish the above work in a single command. Note: in docker environment, mounted local file system does not support set UID/GID operation.
 
-## difference with original goutmp
+## Difference with original goutmp
 
 After search the internet, I found [RLabs/goutmp](https://gogs.blitter.com/RLabs/goutmp) and decide to use it to access `utmp` and `wutmp` database. As I learn more about utmp/utmpx API and `RLabs/goutmp`. I found it's time to create an alternative go module.
 
@@ -144,8 +150,8 @@ There are several differences between `ericwq/goutmp` and `RLabs/goutmp`. `ericw
 - `ericwq/goutmp` update `wtmp` when update `utmp` record. This behavior is more reasonable.
 - `ericwq/goutmp` support `tty` and `pts` device, while `RLabs/goutmp` only support `pts` device.
 
-## inline C or stand alone C module
-We use the following cgo derective and inline C functions to implement the wrapper. Inline C functions is more easy to build than stand alone C module.
+## Inline C or stand alone C module
+We use the following cgo directive and inline C functions to implement the wrapper. Inline C functions is more easy to build than stand alone C module.
 ```c
 // #cgo pkg-config: utmps skalibs
 ```
@@ -161,7 +167,7 @@ $ ar rcs libxutmp.a xutmp.o
 $ gcc -shared -I/usr/include/utmps -lutmps -lskarnet -o libxutmp.so xutmp.c
 ```
 
-The following cgo derective is for stand alone C module.
+The following cgo directive is for stand alone C module.
 ```c
 /*
 #cgo CFLAGS: -I./xutmp
@@ -170,6 +176,6 @@ The following cgo derective is for stand alone C module.
 #include "xutmp.h"
 */
 ```
-## license
+## License
 
 It's MIT license, please see the LICENSE file.

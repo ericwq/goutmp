@@ -13,24 +13,20 @@ import (
 	"unsafe"
 )
 
+// set GOFLAGS="-tags=utmps" before nvim for musl based linux
+// set GOFLAGS="-tags=utmp" before nvim for glibc based linux
+
 // check whether device exist, the line parameter should be form of "pts/0" or "ttys001"
 func DeviceExists(line string) bool {
 	deviceName := fmt.Sprintf("/dev/%s", line)
 	_, err := os.Lstat(deviceName)
-	if err != nil {
-		return false
-	}
-
-	return true
+	return err == nil
 }
 
 // return true if we can read from the utmp data file
 func HasUtmpSupport() bool {
 	r := GetRecord()
-	if r != nil {
-		return true
-	}
-	return false
+	return r != nil
 }
 
 // // return remote client hostname or IP if host lookup fails

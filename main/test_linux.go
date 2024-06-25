@@ -4,12 +4,17 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/user"
 	"time"
 
 	"github.com/creack/pty"
 	utmps "github.com/ericwq/goutmp"
 )
 
+// run with
+// go run -tags utmps .
+// go run -tags utmp  .
 func main() {
 	// user := "ide"
 	// host := "192.168.1.10"
@@ -18,14 +23,19 @@ func main() {
 	// time.Sleep(10 * time.Second)
 	// utmps.Unput_utmp(utmp)
 
-	// user := "ide"
 	host := "192.168.1.10"
 	ptmx, pts, err := pty.Open()
 	fmt.Printf("#test main pts=%s, ptmx=%s\n", pts.Name(), ptmx.Name())
 	if err != nil {
 		fmt.Printf("#test open pts error:%s\n", err)
 	}
-	if ok := utmps.UtmpxAddRecord(pts, host); !ok {
+	u, _ := user.Current()
+	v := utmps.GetRecord()
+	if v == nil {
+		fmt.Println("this system doesn't support utmpx access.")
+	}
+
+	if ok := utmps.AddRecord(pts.Name(), u.Username, host, os.Getpid()); !ok {
 		fmt.Printf("#test UtmpxAddRecord retrun false\n")
 	}
 
@@ -33,7 +43,7 @@ func main() {
 	// utmps.PutLastlogEntry("line", "ide", pts.Name())
 
 	time.Sleep(10 * time.Second)
-	if ok := utmps.UtmpxRemoveRecord(pts); !ok {
+	if ok := utmps.RemoveRecord(pts.Name(), os.Getpid()); !ok {
 		fmt.Printf("#test UtmpxRemoveRecord return false\n")
 	}
 }

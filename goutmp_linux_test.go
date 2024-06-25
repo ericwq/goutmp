@@ -24,8 +24,8 @@ func TestGetRecord(t *testing.T) {
 		v = GetRecord()
 		c++
 	}
-	if v != nil {
-		t.Errorf("#test GetUtmpx should return nil now.")
+	if c == 0 {
+		t.Errorf("#test GetUtmpx return nothing.")
 	}
 	if c == 0 {
 		t.Errorf("#test GetUtmpx got %d records\n", c)
